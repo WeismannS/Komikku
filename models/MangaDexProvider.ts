@@ -196,27 +196,3 @@ export class MangaDexProvider extends Provider {
         return manga;
     }
 }
-
-(async () => {
-    const mangadexProvider = new MangaDexProvider();
-
-    // Fetch manga list
-    // const mangaList = await mangadexProvider.fetchMangaList();
-    // console.log("Manga List:", mangaList);
-
-    // Search for a specific manga
-    const manga = await mangadexProvider.search("One Piece");
-    if (manga) {
-        console.log("Manga Details:", manga);
-
-        // Fetch chapters for the manga
-        // const chapters = await mangadexProvider.getChapters(manga);
-        // console.log("Chapters:", chapters);
-
-        // // Fetch pages for the first chapter
-        // if (chapters.length > 0) {
-        //     const pages = await mangadexProvider.getPages(chapters[0]);
-        //     console.log("Chapter Pages:", pages);
-        // }
-    }
-})();
