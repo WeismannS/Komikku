@@ -1,0 +1,14 @@
+{
+  "name": "scraper",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@b-fuze/deno-dom": "npm:@jsr/b-fuze__deno-dom"
+  }
+}

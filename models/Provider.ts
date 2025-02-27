@@ -1,0 +1,21 @@
+import type { Manga } from "../utils/interface";
+import type { Chapter } from "../utils/types";
+
+
+export abstract class Provider {
+    name: string;
+    baseURL: string;
+    manga_list: Manga[] = [] ;
+    constructor(name: string, baseURL: string) {
+        this.name = name;
+        this.baseURL = baseURL;
+    }
+     getMangaList(): Manga[] 
+     {
+            return this.manga_list;
+     }
+    abstract fetchMangaList(): Promise<Manga[]>;
+    abstract getChapters(manga : Manga): Promise<Chapter[]>;
+    abstract getPages(chapter : Chapter): Promise<string[]>;
+    abstract search(title : string): Promise<Manga | undefined>;
+}
