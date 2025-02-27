@@ -9,6 +9,6 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@b-fuze/deno-dom": "npm:@jsr/b-fuze__deno-dom"
+    "@b-fuze/deno-dom": "npm:@jsr/b-fuze__deno-dom@^0.1.49"
   }
 }
