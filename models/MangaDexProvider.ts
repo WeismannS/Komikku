@@ -88,36 +88,48 @@ export class MangaDexProvider extends Provider {
 
     async fetchMangaList(): Promise<Manga[]> {
         const limit = 10;
-        
-        const { data: mangaListData, error: mangaListError } = await tryFetch(
-            `${this.apiBaseURL}/manga?limit=${limit}&contentRating[]=safe&contentRating[]=suggestive&order[relevance]=desc`,
-            {},
-            "json"
-        );
-        
-        if (mangaListError || !mangaListData || !mangaListData.data) return [];
-        
-        for (const mangaData of mangaListData.data) {
-            const attributes = mangaData.attributes;
-            
-            const title = attributes.title.en || 
-                          attributes.title[Object.keys(attributes.title)[0]] || 
-                          "Unknown Title";
-            
-            const url = `/manga/${mangaData.id}`;
-            
-            const manga = await this.search(title);
-            if (manga) {
-                this.manga_list.push(manga);
+        let offset = 0;
+        let hasMoreManga = true;
+    
+        while (hasMoreManga) {
+            console.log(`Fetching manga list from offset ${offset}...`);
+            const { data: mangaListData, error: mangaListError } = await tryFetch(
+                `${this.apiBaseURL}/manga?limit=${limit}&offset=${offset}&contentRating[]=safe&contentRating[]=suggestive&order[relevance]=desc`,
+                {},
+                "json"
+            );
+    
+            if (mangaListError || !mangaListData || !mangaListData.data || mangaListData.data.length === 0) {
+                hasMoreManga = false;
+                continue;
             }
-            
-            // for API rate limits
-            await sleep(300);
+    
+            for (const mangaData of mangaListData.data) {
+                const attributes = mangaData.attributes;
+    
+                const title = attributes.title.en ||
+                    attributes.title[Object.keys(attributes.title)[0]] ||
+                    "Unknown Title";
+    
+                const url = `/manga/${mangaData.id}`;
+    
+                const manga = await this.search(title);
+                if (manga) {
+                    this.manga_list.push(manga);
+                }
+                await sleep(1000);
+            }
+    
+            offset += mangaListData.data.length;
+    
+            if (mangaListData.data.length < limit) {
+                hasMoreManga = false;
+            }
         }
-        
+    
         return this.manga_list;
     }
-
+    
     async search(title: string): Promise<Manga | undefined> {
         const { data: searchData, error: searchError } = await tryFetch(
             `${this.apiBaseURL}/manga?title=${encodeURIComponent(title)}&limit=1&order[relevance]=desc`,
