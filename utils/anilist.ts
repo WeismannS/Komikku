@@ -1,4 +1,3 @@
-import { $ } from "bun";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const url = 'https://graphql.anilist.co';
@@ -76,7 +75,7 @@ export async function tryFetch(url: string, options: RequestInit & {retryOnRateL
   }
 }
 
-export async function fetchAnilistDetails(title: string) {
+export async function anilistFetch(title: string) {
   const variables = {
     search: title,
   };

@@ -122,24 +122,18 @@ export class Manga {
         this.url = url;
         return this;
     }
-
-
-
     setRating(rating: number) {
         this.rating = rating;
         return this;
     }
-
     setSource(source: source) {
         this.source = source;
         return this;
     }
-
     setTags(Tags: string[]) {
         this.Tags = Tags;
         return this;
     }
-
     setCharacters(character: Character[]) {
         this.characters = character;
         return this;

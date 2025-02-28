@@ -3,9 +3,9 @@ import type { Chapter } from "../utils/types";
 
 
 export abstract class Provider {
-    name: string;
-    baseURL: string;
-    manga_list: Manga[] = [] ;
+    protected name: string;
+    protected baseURL: string;
+    protected manga_list: Manga[] = [] ;
     constructor(name: string, baseURL: string) {
         this.name = name;
         this.baseURL = baseURL;
@@ -19,4 +19,5 @@ export abstract class Provider {
     abstract getPages(chapter : Chapter): Promise<string[]>;
     abstract search(title : string, limitManga? : number): Promise<Manga[] | undefined>;
     abstract grabManga(url : string): Promise<Manga | undefined>;
+    abstract getTrending(): Promise<Manga[]>
 }

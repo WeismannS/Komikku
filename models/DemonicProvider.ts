@@ -2,7 +2,8 @@ import { Chapter } from "../utils/types.ts";
 import { Provider } from "./Provider.ts";
 import { Manga } from "../utils/interface.ts";
 import * as deno_dom from "@b-fuze/deno-dom";
-import { fetchAnilistDetails, tryFetch } from "../utils/anilist.ts";
+import { anilistFetch, tryFetch } from "../utils/anilist.ts";
+import { setTimeout as sleep } from "node:timers/promises";
 
 const { DOMParser } = deno_dom
 
@@ -39,6 +40,7 @@ export class DemonicProvider extends Provider {
             chapters.unshift(chapter);
         }
         manga.setChapters(chapters);
+        manga.chaptersAvailable = chapters.length;
         return chapters;
     }
 
@@ -66,28 +68,35 @@ export class DemonicProvider extends Provider {
         if (error || !pageText) return;
         const page = new DOMParser().parseFromString(pageText, "text/html");
         const manga = new Manga(this);
-        const chapterDiv = page.querySelectorAll("#chapters-list > li");
         const updatedAt = page.querySelector("div.flex-row:nth-child(4) > li:nth-child(2)")?.textContent;
         const title = page.querySelector("html body div#manga-info-container.main-width.center-m div#manga-info-rightColumn.inline-block.left-float div.light-bg.padd-1.border-radius-1 h1.border-box.big-fat-titles")?.textContent
+        const rating = page.querySelector("html body div#manga-info-container.main-width.center-m div#manga-page.inline-block.border-box.left-float div#R-V-B.border-box.center-align li.RVB.light-bg")
+        const description = page.querySelector(".white-font")?.textContent;
+        const cover = page.querySelector("html body div#manga-info-container.main-width.center-m div#manga-page.inline-block.border-box.left-float div.center-align.full-width img.border-box")
+        const authors = page.querySelector("#manga-info-stats > div:nth-child(1) > li:nth-child(2)")?.textContent?.split(";");
+        const genres = Array.from(page.querySelectorAll(".genres-list > li"), (genre) => genre.textContent?.trim());
+        
+        const status = page.querySelector("div.flex-row:nth-child(3) > li:nth-child(2)")?.textContent;
         if (!updatedAt || !title) return;
-        const chapters: Chapter[] = [];
-        const anilist_data = await fetchAnilistDetails(title);
-        if (!anilist_data) return;
-        manga.setAuthors(anilist_data.authors)
-            .setDescription(anilist_data.description)
-            .setGenres(anilist_data.genres)
-            .setRating(anilist_data.averageScore)
-            .setSource(anilist_data.source)
-            .setStatus(anilist_data.status)
-            .setSynonyms(anilist_data.synonyms)
-            .setTitle(anilist_data.title.english || anilist_data.title.romaji || anilist_data.title.native)
-            .setTags(anilist_data.tags.map((tag: { name: string; }) => tag.name))
+        let anilist_data;
+        if (url.split("/")[1] == "manga")
+             anilist_data = await anilistFetch(title);
+        if (rating) manga.setRating(parseInt(rating.textContent));
+        manga.setAuthors(authors || anilist_data?.authors || [])
+            .setDescription(description || anilist_data.description)
+            .setGenres(genres || anilist_data.genres || [])
+            .setSource(anilist_data?.source)
+            .setStatus(status || anilist_data?.status || "UNKNOWN")
+            .setSynonyms(anilist_data?.synonyms)
+            .setTitle(title || anilist_data.title.english || anilist_data.title.romaji || anilist_data.title.native)
+            .setTags(anilist_data?.tags?.map((tag: { name: string; }) => tag.name))
             .setUrl(url)
-            .setCover(anilist_data.coverImage.large)
+            .setCover(cover?.getAttribute("src") || anilist_data.coverImage.large || "")
             .setUpdatedAt(new Date(updatedAt))
-            .setCreatedAt(new Date(anilist_data.startDate.year, anilist_data.startDate.month, anilist_data.startDate.day))
-            .setCharacters(anilist_data.characters.nodes.map((character: { name: { full: string; first: string, last: string }, gender: string, image: string }) =>
+            .setCreatedAt(anilist_data ? new Date(anilist_data?.startDate.year, anilist_data?.startDate.month, anilist_data?.startDate.day) :  new Date("invalid"))
+            .setCharacters(anilist_data?.characters.nodes.map((character: { name: { full: string; first: string, last: string }, gender: string, image: string }) =>
                 ({ ...character.name, gender: character.gender, image: character.image })))
+            .setChapters(await this.getChapters(manga));
             return manga;
     }
 
@@ -100,7 +109,6 @@ export class DemonicProvider extends Provider {
         if (searchError || !searchPageText) return results;   
         const searchPage = new DOMParser().parseFromString(searchPageText, "text/html");
         const manga_elements = searchPage.querySelectorAll("a");
-        
         for (const manga_element of manga_elements) {
             if (limitManga != undefined && i >= limitManga) break;
             const url = manga_element.getAttribute("href");
@@ -110,5 +118,13 @@ export class DemonicProvider extends Provider {
         }
         
         return results;
+    }
+    async getTrending(): Promise<Manga[]> {
+        const { data: searchPageText, error: searchError } = await tryFetch(this.baseURL,{}, "text");
+        if (searchError || !searchPageText) return [];
+        const searchPage = new DOMParser().parseFromString(searchPageText, "text/html");
+        const elements = Array.from(searchPage.querySelectorAll("#carousel > div > a"), ((e)=>e.getAttribute("href"))) 
+        const mangaList = (await Promise.all(elements.map(async (url) => await this.grabManga(url || ""), await sleep(100)))).filter((manga) => manga != undefined);
+        return mangaList;
     }
 }
