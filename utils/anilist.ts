@@ -55,7 +55,8 @@ export async function tryFetch(url: string, options: RequestInit & {retryOnRateL
     if (!response.ok) {
       const retryAfter = response.headers.get('Retry-After');
       if (response.status === 429  || retryAfter) {
-        console.error(`Rate limited! Status: ${response.status}`);
+        console.error(`Rate limited! Status: ${response.status}, ${url}`);
+        
         if (retryAfter && options.retryOnRateLimit)
         {
           await sleep(parseInt(retryAfter) * 1000);

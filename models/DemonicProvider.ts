@@ -53,7 +53,7 @@ export class DemonicProvider extends Provider {
                 const title = manga_element.querySelector("a")?.getAttribute("title");
                 const url = manga_element.querySelector("a")?.getAttribute("href");
                 if (!title || !url) continue;
-                const manga = await this.search(title);
+                const manga = await this.grabManga(url);
                 if (!manga) continue;
                 this.manga_list.push(manga);
             }
@@ -61,30 +61,16 @@ export class DemonicProvider extends Provider {
         return this.manga_list;
     }
 
-    async search(title: string): Promise<Manga | undefined> {
-        const { data: searchPageText, error: searchError } = await tryFetch(this.baseURL + "search.php?manga=" + encodeURIComponent(title), {}, "text");
-        if (searchError || !searchPageText) return;
-        const searchPage = new DOMParser().parseFromString(searchPageText, "text/html");
-        const manga_element = searchPage.querySelector("a");
-        const url = manga_element?.getAttribute("href");
-        if (!manga_element || !url) return;
-        const { data: mangaHomePageText, error: mangaHomeError } = await tryFetch(this.baseURL + url, {}, "text");
-        if (mangaHomeError || !mangaHomePageText) return;
-        const manga_home = new DOMParser().parseFromString(mangaHomePageText, "text/html");
-        if (!manga_home) return;
+    async grabManga(url: string): Promise<Manga | undefined> {
+        const { data: pageText, error } = await tryFetch(this.baseURL + url, {}, "text");
+        if (error || !pageText) return;
+        const page = new DOMParser().parseFromString(pageText, "text/html");
         const manga = new Manga(this);
-        const chapterDiv = manga_home.querySelectorAll("#chapters-list > li");
-        const updatedAt = manga_home.querySelector("div.flex-row:nth-child(4) > li:nth-child(2)")?.textContent;
-        if (!updatedAt) return;
+        const chapterDiv = page.querySelectorAll("#chapters-list > li");
+        const updatedAt = page.querySelector("div.flex-row:nth-child(4) > li:nth-child(2)")?.textContent;
+        const title = page.querySelector("html body div#manga-info-container.main-width.center-m div#manga-info-rightColumn.inline-block.left-float div.light-bg.padd-1.border-radius-1 h1.border-box.big-fat-titles")?.textContent
+        if (!updatedAt || !title) return;
         const chapters: Chapter[] = [];
-        for (let chapter_element of chapterDiv) {
-            const title = chapter_element.querySelector("a")?.getAttribute("title");
-            const url = chapter_element.querySelector("a")?.getAttribute("href");
-            const date = chapter_element.querySelector("span")?.textContent;
-            if (!title || !url || !date) continue;
-            const chapter = new Chapter(manga, title, url, new Date(date));
-            chapters.unshift(chapter);
-        }
         const anilist_data = await fetchAnilistDetails(title);
         if (!anilist_data) return;
         manga.setAuthors(anilist_data.authors)
@@ -96,15 +82,33 @@ export class DemonicProvider extends Provider {
             .setSynonyms(anilist_data.synonyms)
             .setTitle(anilist_data.title.english || anilist_data.title.romaji || anilist_data.title.native)
             .setTags(anilist_data.tags.map((tag: { name: string; }) => tag.name))
-            .setUrl(manga_element.getAttribute("href") || "")
+            .setUrl(url)
             .setCover(anilist_data.coverImage.large)
             .setUpdatedAt(new Date(updatedAt))
             .setCreatedAt(new Date(anilist_data.startDate.year, anilist_data.startDate.month, anilist_data.startDate.day))
             .setCharacters(anilist_data.characters.nodes.map((character: { name: { full: string; first: string, last: string }, gender: string, image: string }) =>
                 ({ ...character.name, gender: character.gender, image: character.image })))
-            .setChapters(chapters);
-            this.manga_list.push(manga);
-        return manga;
+            return manga;
+    }
+
+
+            
+    async search(title: string): Promise<Manga[]> {
+        const results: Manga[] = [];
+        const { data: searchPageText, error: searchError } = await tryFetch(this.baseURL + "search.php?manga=" + encodeURIComponent(title), {}, "text");
+        if (searchError || !searchPageText) return results;
+        
+        const searchPage = new DOMParser().parseFromString(searchPageText, "text/html");
+        const manga_elements = searchPage.querySelectorAll("a");
+        
+        for (const manga_element of manga_elements) {
+            const url = manga_element.getAttribute("href");
+            if (!url) continue;
+            const manga = await this.grabManga(url);
+            console.log("Manga", manga)
+            if (manga) results.push(manga);
+        }
+        
+        return results;
     }
 }
-
