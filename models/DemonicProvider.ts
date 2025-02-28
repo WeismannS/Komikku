@@ -93,20 +93,20 @@ export class DemonicProvider extends Provider {
 
 
             
-    async search(title: string): Promise<Manga[]> {
+    async search(title: string, limitManga? : number): Promise<Manga[]> {
+        let i = 0;
         const results: Manga[] = [];
         const { data: searchPageText, error: searchError } = await tryFetch(this.baseURL + "search.php?manga=" + encodeURIComponent(title), {}, "text");
-        if (searchError || !searchPageText) return results;
-        
+        if (searchError || !searchPageText) return results;   
         const searchPage = new DOMParser().parseFromString(searchPageText, "text/html");
         const manga_elements = searchPage.querySelectorAll("a");
         
         for (const manga_element of manga_elements) {
+            if (limitManga != undefined && i >= limitManga) break;
             const url = manga_element.getAttribute("href");
             if (!url) continue;
             const manga = await this.grabManga(url);
-            console.log("Manga", manga)
-            if (manga) results.push(manga);
+            if (manga) results.push(manga), i++;
         }
         
         return results;

@@ -47,10 +47,12 @@ query ($search: String!) {
     }
   }
 }
-`;
+`
+;
 
 export async function tryFetch(url: string, options: RequestInit & {retryOnRateLimit? : boolean}, func: "json" | "text") {
   try {
+    console.log(url);
     const response = await fetch(url, options);
     if (!response.ok) {
       const retryAfter = response.headers.get('Retry-After');
