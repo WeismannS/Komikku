@@ -1,3 +1,4 @@
+import { $ } from "bun";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const url = 'https://graphql.anilist.co';
@@ -48,11 +49,21 @@ query ($search: String!) {
 }
 `;
 
-export async function tryFetch(url: string, options: RequestInit, func: "json" | "text") {
+export async function tryFetch(url: string, options: RequestInit & {retryOnRateLimit? : boolean}, func: "json" | "text") {
   try {
     const response = await fetch(url, options);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const retryAfter = response.headers.get('Retry-After');
+      if (response.status === 429  || retryAfter) {
+        console.error(`Rate limited! Status: ${response.status}`);
+        if (retryAfter && options.retryOnRateLimit)
+        {
+          await sleep(parseInt(retryAfter) * 1000);
+          return tryFetch(url, options, func);
+        }
+      } else {
+        throw new Error(`HTTP error! status: ${response.status} in ${url}`);
+      }
     }
     const data = await response[func]();
     return { data, error: null };
@@ -68,6 +79,7 @@ export async function fetchAnilistDetails(title: string) {
   };
 
   const options = {
+    retryOnRateLimit: true,
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -78,9 +90,7 @@ export async function fetchAnilistDetails(title: string) {
     }),
   };
 
-  const { data, error } = await tryFetch(url, options, "json");
-  await sleep(100);
-  if (error || !data) 
-        return ;
+  const { data, error } = await tryFetch(url, options, "json") as { data: any, error: any };
+
   return data.data.Page.media[0];
 }
