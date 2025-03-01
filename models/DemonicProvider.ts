@@ -1,9 +1,9 @@
-import { Chapter } from "../utils/types.ts";
+import { Chapter } from "../types/types.ts";
 import { Provider } from "./Provider.ts";
-import { Manga } from "../utils/interface.ts";
+import { Manga } from "../types/interface.ts";
 import * as deno_dom from "@b-fuze/deno-dom";
-import { anilistFetch, tryFetch } from "../utils/anilist.ts";
-import { setTimeout as sleep } from "node:timers/promises";
+import { anilistFetch } from "../utils/anilist.ts";
+import { sleep ,tryFetch } from "../utils/helper.ts";
 
 const { DOMParser } = deno_dom
 

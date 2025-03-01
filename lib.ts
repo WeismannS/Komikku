@@ -1,6 +1,6 @@
 import { DemonicProvider } from "./models/DemonicProvider.ts";
 import type { Provider } from "./models/Provider.ts";
-import type { Manga } from "./utils/interface.ts";
+import type { Manga } from "./types/interface.ts";
 
 
 

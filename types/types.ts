@@ -1,4 +1,4 @@
-import type { comment, Manga } from "./interface";
+import type { comment, Manga } from "../types/interface";
 
 // Define the types for clarity
 export class Chapter {

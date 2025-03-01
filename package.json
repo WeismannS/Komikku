@@ -1,5 +1,5 @@
 {
-  "name": "scraper",
+  "name": "komikku",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {

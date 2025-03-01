@@ -1,5 +1,5 @@
 import type { Provider } from "../models/Provider"
-import type { Chapter } from "./types"
+import type { Chapter } from "../types/types"
 
 export interface comment {
     username: string

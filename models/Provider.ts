@@ -1,5 +1,5 @@
-import type { Manga } from "../utils/interface";
-import type { Chapter } from "../utils/types";
+import type { Manga } from "../types/interface.ts";
+import type { Chapter } from "../types/types.ts";
 
 
 export abstract class Provider {
