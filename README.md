@@ -1,19 +1,38 @@
-## Overview
+Collecting workspace information# Komikku
 
-Komikku is a TypeScript-based manga scraper library that provides a unified API for fetching manga data from various sources. It currently supports DemonicScans as a provider, with an extensible architecture to add more providers.
+A Type-Safe TypeScript-based Interface library that provides a unified API for fetching manga data from various sources.
+
+## Features
+
+- 🌐 **Unified API**: Access manga from multiple sources with a consistent interface
+- 🔍 **Search**: Find manga across different providers
+- 📊 **Trending**: Get currently trending manga
+- 📖 **Chapter Management**: Fetch chapters and page images
+- 📱 **Integration**: AniList integration for enhanced metadata
+- 🛠️ **Extensible**: Architecture designed for easy addition of new providers
 
 ## Installation
 
-the only dependancy Komikku depends on is [@jsr/dom-deno](https://jsr.io/@b-fuze/deno-dom), simply :
+The only dependency Komikku requires is [@jsr/dom-deno](https://jsr.io/@b-fuze/deno-dom):
+
 ```bash
-# for bun :
-        bun install
-# for node :
-        npm install
-# for deno :
-        deno install
+# For Bun:
+bun install
+
+# For Node:
+npm install
+
+# For Deno:
+deno install
 ```
-if you encounter an error, please explicitly install the package and it should work
+
+If you encounter an error, try explicitly installing the package:
+
+```bash
+# For Bun:
+bun add @b-fuze/deno-dom@npm:@jsr/b-fuze__deno-dom
+```
+
 ## Usage
 
 ### Basic Usage
@@ -31,8 +50,6 @@ const trendingManga = await komikku.providers.Demonicscans.getTrending();
 ### Search for Manga
 
 ```typescript
-const komikku = new Komikku();
-
 // Search across all providers
 const results = await komikku.search("One Piece");
 
@@ -41,67 +58,103 @@ const limitedResults = await komikku.search("Naruto", {
   providers: ["Demonicscans"],
   limitManga: 5
 });
+
+// Get chapters for a manga
+const manga = results[0];
+const chapters = await manga.getChapters();
 ```
 
-## Core Components
+### Fetch Chapter Pages
 
-### `Komikku`
+```typescript
+// Get a specific chapter
+const manga = await komikku.search("One Piece", { limitManga: 1 });
+const chapters = await manga[0].getChapters();
+const firstChapter = chapters[0];
 
-The main client class that handles providers and provides a unified search interface.
+// Get the pages for a chapter
+const pages = await firstChapter.getPages();
+```
 
-### `Provider`
+### AniList Integration
 
-Abstract base class that all manga providers must implement:
+```typescript
+import { Anilist } from "./utils/anilist.ts";
+import { MediaType } from "./types/MediaSchema.ts";
 
-- `fetchMangaList()`: Fetches the complete manga list
-- `getChapters(manga)`: Gets chapters for a specific manga
-- `getPages(chapter)`: Gets page images for a specific chapter
-- `search(title, limitManga?)`: Searches for manga by title
-- `grabManga(url)`: Fetches detailed manga information
-- `getTrending()`: Gets trending manga
+// Search for manga using AniList
+const anilist = new Anilist();
+const searchResults = await anilist.search({
+  search: "One Piece", 
+  type: MediaType.Manga,
+  perPage: 5
+});
+```
 
-### `DemonicProvider`
+## Architecture
 
-Implementation of the Provider interface for DemonicScans.
+### Core Components
+
+- **Komikku**: Main client class that handles providers and provides a unified search interface.
+- **Provider**: Abstract base class that all manga providers must implement.
+- **DemonicProvider**: Implementation of the Provider interface for DemonicScans.
 
 ### Data Models
 
-#### `Manga`
+- **Manga**: Represents a manga with properties like title, authors, chapters, etc.
+- **Chapter**: Represents a manga chapter with methods to fetch and manage pages.
 
-Represents a manga with properties like title, authors, chapters, etc.
+### Utilities
 
-#### `Chapter`
+- **Anilist**: Fetch manga metadata from AniList GraphQL API.
+- **Helper**: Utility functions for HTTP requests with retry logic.
 
-Represents a manga chapter with methods to fetch and manage pages.
+## Currently Supported Providers
 
-## Utilities
+- DemonicScans
 
-### `anilist.ts`
+## Adding a New Provider
 
-Provides functionality to fetch manga metadata from AniList GraphQL API:
+To add a new provider, create a new class that extends `Provider` and implements all required abstract methods:
 
-- `tryFetch()`: Helper function for making HTTP requests with retry logic
-- `anilistFetch()`: Fetches manga metadata from AniList
+```typescript
+import { Provider } from "./models/Provider.ts";
+import { Manga } from "./types/interface.ts";
+import { Chapter } from "./types/types.ts";
 
-## Development
-
-The project uses TypeScript with Bun as the runtime. The configuration is set up in tsconfig.json.
-
-### Project Structure
-
+export class NewProvider extends Provider {
+    constructor() {
+        super("ProviderName", "https://provider-url.com/");
+    }
+    
+    async fetchMangaList(): Promise<Manga[]> {
+        // Implementation
+    }
+    
+    async getChapters(manga: Manga): Promise<Chapter[]> {
+        // Implementation
+    }
+    
+    async getPages(chapter: Chapter): Promise<string[]> {
+        // Implementation
+    }
+    
+    async search(title: string, limitManga?: number): Promise<Manga[] | undefined> {
+        // Implementation
+    }
+    
+    async grabManga(url: string): Promise<Manga | undefined> {
+        // Implementation
+    }
+    
+    async getTrending(): Promise<Manga[]> {
+        // Implementation
+    }
+}
 ```
-scraper/
-├── index.ts          # Entry point
-├── lib.ts            # Main library class
-├── models/           # Provider implementations
-│   ├── DemonicProvider.ts
-│   └── Provider.ts
-└── utils/            # Utility functions and interfaces
-    ├── anilist.ts
-    ├── interface.ts
-    └── types.ts
-```
 
-### Adding a New Provider
+Then add it to the `providers` object in the `Komikku` class.
 
-To add a new provider, create a new class that extends `Provider` and implements all required abstract methods. Then add it to the `providers` object in `Komikku`.
+## License
+
+MIT
