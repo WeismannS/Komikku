@@ -1,11 +1,39 @@
-const res = await fetch("https://graphql.anilist.co/", {
-    "credentials": "omit",
-    "headers": {
-        "content-type": "application/json",
-    },
-    "referrer": "https://studio.apollographql.com/",
-    "body": "{\"query\":\"query (\\r\\n  $page: Int = 1\\r\\n  $id: Int\\r\\n  $type: MediaType\\r\\n  $isAdult: Boolean = false\\r\\n  $search: String\\r\\n  $format: [MediaFormat]\\r\\n  $status: MediaStatus\\r\\n  $countryOfOrigin: CountryCode\\r\\n  $source: MediaSource\\r\\n  $season: MediaSeason\\r\\n  $seasonYear: Int\\r\\n  $year: String\\r\\n  $onList: Boolean\\r\\n  $yearLesser: FuzzyDateInt\\r\\n  $yearGreater: FuzzyDateInt\\r\\n  $episodeLesser: Int\\r\\n  $episodeGreater: Int\\r\\n  $durationLesser: Int\\r\\n  $durationGreater: Int\\r\\n  $chapterLesser: Int\\r\\n  $chapterGreater: Int\\r\\n  $volumeLesser: Int\\r\\n  $volumeGreater: Int\\r\\n  $licensedBy: [Int]\\r\\n  $isLicensed: Boolean\\r\\n  $genres: [String]\\r\\n  $excludedGenres: [String]\\r\\n  $tags: [String]\\r\\n  $excludedTags: [String]\\r\\n  $minimumTagRank: Int\\r\\n  $sort: [MediaSort] = [POPULARITY_DESC, SCORE_DESC]\\r\\n) {\\r\\n  Page(page: $page, perPage: 20) {\\r\\n    pageInfo {\\r\\n      total\\r\\n      perPage\\r\\n      currentPage\\r\\n      lastPage\\r\\n      hasNextPage\\r\\n    }\\r\\n    media(\\r\\n      id: $id\\r\\n      type: $type\\r\\n      season: $season\\r\\n      format_in: $format\\r\\n      status: $status\\r\\n      countryOfOrigin: $countryOfOrigin\\r\\n      source: $source\\r\\n      search: $search\\r\\n      onList: $onList\\r\\n      seasonYear: $seasonYear\\r\\n      startDate_like: $year\\r\\n      startDate_lesser: $yearLesser\\r\\n      startDate_greater: $yearGreater\\r\\n      episodes_lesser: $episodeLesser\\r\\n      episodes_greater: $episodeGreater\\r\\n      duration_lesser: $durationLesser\\r\\n      duration_greater: $durationGreater\\r\\n      chapters_lesser: $chapterLesser\\r\\n      chapters_greater: $chapterGreater\\r\\n      volumes_lesser: $volumeLesser\\r\\n      volumes_greater: $volumeGreater\\r\\n      licensedById_in: $licensedBy\\r\\n      isLicensed: $isLicensed\\r\\n      genre_in: $genres\\r\\n      genre_not_in: $excludedGenres\\r\\n      tag_in: $tags\\r\\n      tag_not_in: $excludedTags\\r\\n      minimumTagRank: $minimumTagRank\\r\\n      sort: $sort\\r\\n      isAdult: $isAdult\\r\\n    ) {\\r\\n      id\\r\\n      title {\\r\\n        userPreferred\\r\\n      }\\r\\n      coverImage {\\r\\n        extraLarge\\r\\n        large\\r\\n        color\\r\\n      }\\r\\n      startDate {\\r\\n        year\\r\\n        month\\r\\n        day\\r\\n      }\\r\\n      endDate {\\r\\n        year\\r\\n        month\\r\\n        day\\r\\n      }\\r\\n      bannerImage\\r\\n      season\\r\\n      seasonYear\\r\\n      description\\r\\n      type\\r\\n      format\\r\\n      status(version: 2)\\r\\n      episodes\\r\\n      duration\\r\\n      chapters\\r\\n      volumes\\r\\n      genres\\r\\n      isAdult\\r\\n      averageScore\\r\\n      popularity\\r\\n      nextAiringEpisode {\\r\\n        airingAt\\r\\n        timeUntilAiring\\r\\n        episode\\r\\n      }\\r\\n      mediaListEntry {\\r\\n        id\\r\\n        status\\r\\n      }\\r\\n      studios(isMain: true) {\\r\\n        edges {\\r\\n          isMain\\r\\n          node {\\r\\n            id\\r\\n            name\\r\\n          }\\r\\n        }\\r\\n      }\\r\\n    }\\r\\n  }\\r\\n}\\r\\n\",\"variables\":{\"page\":1,\"type\":\"MANGA\",\"sort\":[\"TRENDING_DESC\",\"POPULARITY_DESC\"]}}",
-    "method": "POST",
-});
+type ob = { id: number; name: string; age: number }
 
-console.log(res.status);
+// First, convert the object type to a union of single-property objects
+type UnionizeProperties<T> = { 
+  [K in keyof T]: { [P in K]: T[P] } 
+}[keyof T]
+
+// Type that represents all possible property combinations
+type PowerSet<T> = T extends object
+  ? T | (Partial<T> & { [K in keyof T]: K extends keyof T ? T[K] : never })
+  : T
+
+// Helper type to convert union to intersection
+type UnionToIntersection<U> = 
+  (U extends any ? (k: U) => void : never) extends 
+  ((k: infer I) => void) ? I : never
+
+// Combine properties from a union of objects
+type UnionToObject<U> = { [K in keyof UnionToIntersection<U>]: UnionToIntersection<U>[K] }
+
+// Combine multiple single-property types into one object
+type Combine<T> = UnionToObject<T>
+
+// Now we can create all possible combinations
+type AtLeastOne<T> = { [K in keyof T]: Pick<T, K> }[keyof T]
+type AtLeastTwo<T> = { 
+  [K in keyof T]: { 
+    [L in keyof Omit<T, K>]: Pick<T, K | L> 
+  }[keyof Omit<T, K>] 
+}[keyof T]
+
+export type AllCombinations<T> = 
+  T | 
+  UnionizeProperties<T> | 
+  AtLeastTwo<T>
+
+
+
+

@@ -440,6 +440,11 @@ export type AiringSchedule = {
   timeUntilAiring: Scalars['Int']['output'];
 };
 
+type CharacterImage = {
+  large?: Maybe<Scalars['String']['output']>
+
+  medium?: Maybe<Scalars['String']['output']>
+}
 /** A character */
 export type Character = {
   __typename?: 'Character';
@@ -447,6 +452,8 @@ export type Character = {
   id: Scalars['Int']['output'];
   /** The name of the character */
   name?: Maybe<CharacterName>;
+  gender?: Maybe<Scalars['String']['output']>;
+  image?: Maybe<CharacterImage>;
 };
 
 /** The names of the character */
@@ -454,6 +461,10 @@ export type CharacterName = {
   __typename?: 'CharacterName';
   /** The character's first and last name */
   full?: Maybe<Scalars['String']['output']>;
+  /** The character's given name */
+  first?: Maybe<Scalars['String']['output']>;
+  /** The character's surname */
+  last?: Maybe<Scalars['String']['output']>;
 };
 
 export type InternalPageMediaArgs = {

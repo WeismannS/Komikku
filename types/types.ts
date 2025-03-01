@@ -23,8 +23,9 @@ export class Chapter {
         return this;
     }
     async getPages() {
-        const Pages =  this.manga.provider.getPages(this);
-        this.setPages(await Pages)
+        const Pages =  await this.manga.provider?.getPages(this);
+        if (!Pages) return this.pages
+        this.setPages(Pages)
         return this.pages
   }
 }

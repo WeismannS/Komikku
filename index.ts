@@ -1,8 +1,10 @@
 
 
 import { Komikku } from "./lib.ts";
+import { DemonicProvider } from "./models/DemonicProvider.ts";
+import { Manga } from "./types/interface.ts";
 import { MediaSort, MediaType } from "./types/MediaSchema.ts";
-import { Anilist, anilistFetch } from "./utils/anilist.ts";
+import { Anilist } from "./utils/anilist.ts";
 
 
 
@@ -18,10 +20,6 @@ import { Anilist, anilistFetch } from "./utils/anilist.ts";
 
 const anilist = new Anilist()
 
-
-console.log(await anilist.search({
-    "perPage": 2,
-    "type": MediaType.Manga,
-    "sort" : [MediaSort.Trending],
-    "genre_in" : ["ROMANCE", "ecchi","Action"]
-  }))
+const manga = await (await new Komikku().search("one piece", {providers : ["Demonicscans"], limitManga : 1}))[0]
+if (manga)
+    console.log(manga, (await manga.getChapters()))

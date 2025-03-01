@@ -2,8 +2,9 @@ import { Chapter } from "../types/types.ts";
 import { Provider } from "./Provider.ts";
 import { Manga } from "../types/interface.ts";
 import * as deno_dom from "@b-fuze/deno-dom";
-import { anilistFetch } from "../utils/anilist.ts";
+import { Anilist } from "../utils/anilist.ts";
 import { sleep ,tryFetch } from "../utils/helper.ts";
+import { MediaStatus, MediaType } from "../types/MediaSchema.ts";
 
 const { DOMParser } = deno_dom
 
@@ -80,24 +81,14 @@ export class DemonicProvider extends Provider {
         if (!updatedAt || !title) return;
         let anilist_data;
         if (url.split("/")[1] == "manga")
-             anilist_data = await anilistFetch(title);
+             anilist_data = (await new Anilist().search({search:title, type:MediaType.Manga, perPage:1}))
+        anilist_data = anilist_data?.[0];
         if (rating) manga.setRating(parseInt(rating.textContent));
-        manga.setAuthors(authors || anilist_data?.authors || [])
-            .setDescription(description || anilist_data.description)
-            .setGenres(genres || anilist_data.genres || [])
-            .setSource(anilist_data?.source)
-            .setStatus(status || anilist_data?.status || "UNKNOWN")
-            .setSynonyms(anilist_data?.synonyms)
-            .setTitle(title || anilist_data.title.english || anilist_data.title.romaji || anilist_data.title.native)
-            .setTags(anilist_data?.tags?.map((tag: { name: string; }) => tag.name))
-            .setUrl(url)
-            .setCover(cover?.getAttribute("src") || anilist_data.coverImage.large || "")
-            .setUpdatedAt(new Date(updatedAt))
-            .setCreatedAt(anilist_data ? new Date(anilist_data?.startDate.year, anilist_data?.startDate.month, anilist_data?.startDate.day) :  new Date("invalid"))
-            .setCharacters(anilist_data?.characters.nodes.map((character: { name: { full: string; first: string, last: string }, gender: string, image: string }) =>
-                ({ ...character.name, gender: character.gender, image: character.image })))
-            .setChapters(await this.getChapters(manga));
-            return manga;
+        status?.toLowerCase() == "completed" ? MediaStatus.Finished : MediaStatus.Releasing;
+        let result = (await new Anilist().search({search:title, type:MediaType.Manga, perPage:1}))?.[0];
+        if (!result) return;
+            result.setChapters(await this.getChapters(manga));
+            return result.setProvider(this).setUrl(url).setAuthors(authors);
     }
 
 
