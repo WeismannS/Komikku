@@ -1,5 +1,3 @@
-Collecting workspace information# Komikku
-
 A Type-Safe TypeScript-based Interface library that provides a unified API for fetching manga data from various sources.
 
 ## Features
@@ -26,12 +24,7 @@ npm install
 deno install
 ```
 
-If you encounter an error, try explicitly installing the package:
-
-```bash
-# For Bun:
-bun add @b-fuze/deno-dom@npm:@jsr/b-fuze__deno-dom
-```
+If you encounter an error, try explicitly installing the package through the link above
 
 ## Usage
 
