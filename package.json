@@ -1,14 +1,28 @@
 {
   "name": "komikku",
-  "module": "index.ts",
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
+  "module": "dist/komikku.esm.js",
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "@b-fuze/deno-dom": "npm:@jsr/b-fuze__deno-dom"
+  },
+  "version": "1.0.0",
+  "description": "A Type-Safe TypeScript-based Interface library that provides a unified API for fetching manga data from various sources.",
+  "main": "dist/komikku.cjs.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WeismannS/Komikku.git"
+  },
+  "author": "WeismannS <Sahazell@proton.me>",
+  "license": "MIT",
+  "scripts": {
+    "build": "preconstruct build",
+    "dev": "preconstruct dev",
+    "fix": "preconstruct fix"
+  },
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.26.0",
+    "@preconstruct/cli": "^2.8.11"
   }
 }

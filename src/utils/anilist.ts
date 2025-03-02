@@ -1,7 +1,6 @@
 import { tryFetch } from "./helper.ts";
 import { MediaType, type InternalPageMediaArgs, type Media, type QueryPageArgs } from "../types/MediaSchema.ts";
 import {Anime, Manga } from "../types/interface.ts";
-import type { AllCombinations } from "../test.ts";
 const url = 'https://graphql.anilist.co';
 
 const searchQuery = `
@@ -167,15 +166,15 @@ const searchQuery = `
   }
 }
 `
-type Prettify<T> = {
-  [K in keyof T]: T[K];
-} & {};
-type include_props = Prettify<keyof Media>
+
+type mangaSearchArgs = InternalPageMediaArgs & QueryPageArgs & {type : MediaType.Manga}
+type animeSearchArgs = InternalPageMediaArgs & QueryPageArgs & {type : MediaType.Anime}
+type mediaSearchArgs = InternalPageMediaArgs & QueryPageArgs & {type : MediaType.Anime | MediaType.Manga}
 export class Anilist {
   constructor() {
   }
   // an abstraction to fetch the trending anime/manga
-  async getTrending(perPage: number = 10) {
+  async getTrending(perPage: number = 10): Promise<Media[] | undefined> {
     const variables = {
       page: 1,
       perPage,
@@ -199,9 +198,9 @@ export class Anilist {
     return data.data.Page.media;
   }
 
-  async search(args: InternalPageMediaArgs & QueryPageArgs & {type : MediaType.Anime},): Promise<Anime[] | undefined>;
-  async search(args: InternalPageMediaArgs & QueryPageArgs & {type : MediaType.Manga}): Promise<Manga[] | undefined>;
-  async search(args: InternalPageMediaArgs & QueryPageArgs & {type : MediaType.Anime | MediaType.Manga}): Promise<Anime[] | Manga[] | undefined> {
+  async search(args: animeSearchArgs,): Promise<Anime[] | undefined>;
+  async search(args: mangaSearchArgs): Promise<Manga[] | undefined>;
+  async search(args: mediaSearchArgs): Promise<Anime[] | Manga[] | undefined> {
     const options = {
       retryOnRateLimit: true,
       method: 'POST',

@@ -9,9 +9,10 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
-
+deno.lock
+package-lock*
 # Caches
-
+dist/
 .cache
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
@@ -118,7 +119,7 @@ out
 # Nuxt.js build / generate output
 
 .nuxt
-dist
+# dist
 
 # Gatsby files
 

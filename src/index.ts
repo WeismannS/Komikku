@@ -1,6 +1,7 @@
 import { DemonicProvider } from "./models/DemonicProvider.ts";
 import type { Provider } from "./models/Provider.ts";
 import type { Manga } from "./types/interface.ts";
+import type { Media } from "./types/MediaSchema.ts";
 import { Anilist } from "./utils/anilist.ts";
 
 
@@ -8,10 +9,10 @@ import { Anilist } from "./utils/anilist.ts";
 
 
 type providers = "Demonicscans" ;
-
+export type {Manga, Provider, Media, }
 export class Komikku {
     providers: Record<providers, Provider>;
-    Anilist = new Anilist();
+    Anilist : Anilist = new Anilist();
     constructor() {
         this.providers = {
             "Demonicscans": new DemonicProvider()

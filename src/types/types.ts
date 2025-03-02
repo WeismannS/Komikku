@@ -1,4 +1,4 @@
-import type { comment, Manga } from "../types/interface";
+import type { Manga } from "../types/interface.ts";
 
 // Define the types for clarity
 export class Chapter {
@@ -18,11 +18,11 @@ export class Chapter {
         this.url = url;
         this.date = date;
     }
-    setPages(pages: string[]) {
+    setPages(pages: string[]) : this {
         this.pages = pages;
         return this;
     }
-    async getPages() {
+    async getPages() : Promise<string[]> {
         const Pages =  await this.manga.provider?.getPages(this);
         if (!Pages) return this.pages
         this.setPages(Pages)

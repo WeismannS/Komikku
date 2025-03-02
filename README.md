@@ -1,4 +1,4 @@
-A Type-Safe TypeScript-based Interface library that provides a unified API for fetching manga data from various sources.
+A Type-Safe TypeScript-based Interface library that provides a unified API for fetching manga/manhwa data from various sources.
 
 ## Features
 

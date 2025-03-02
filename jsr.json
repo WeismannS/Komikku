@@ -1,0 +1,16 @@
+{
+    "name": "@weismanns/komikku",
+    "version": "1.0.0",
+    "description": "A Type-Safe TypeScript-based Interface library that provides a unified API for fetching manga data from various sources.",
+    "exports": {
+      ".": "./src/index.ts"
+    },
+    "publish": {
+      "include": ["src/**/*.ts", "LICENSE", "README.md"],
+      "exclude": ["src/**/*.test.ts", "src/**/*.spec.ts"]
+    },
+    "dependencies": {
+      "@b-fuze/deno-dom": "^0.x"
+    },
+    "license": "MIT"
+}
