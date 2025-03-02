@@ -10,7 +10,7 @@
       "exclude": ["src/**/*.test.ts", "src/**/*.spec.ts"]
     },
     "dependencies": {
-      "@b-fuze/deno-dom": "^0.x"
+      "@b-fuze/deno-dom": "^0.1.49"
     },
     "license": "MIT"
 }
