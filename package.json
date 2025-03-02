@@ -9,7 +9,7 @@
   },
   "version": "1.0.0",
   "description": "A Type-Safe TypeScript-based Interface library that provides a unified API for fetching manga data from various sources.",
-  "main": "dist/komikku.cjs.js",
+  "main": "dist/komikku.esm.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/WeismannS/Komikku.git"
