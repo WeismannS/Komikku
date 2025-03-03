@@ -1,6 +1,6 @@
 import type { Provider } from "../models/Provider.ts"
 import type { Chapter } from "../types/types.ts"
-import { MediaStatus, type Maybe, type Media, type MediaTag } from "./MediaSchema.ts"
+import { type MediaStatus, type Maybe, type Media, type MediaTag, type FuzzyDate } from "./MediaSchema.ts"
 
 export interface Character {
     first? :  Maybe<string> 
@@ -14,13 +14,15 @@ type  status = "FINISHED" | "RELEASING" | "CANCELLED" | "NOT_YET_RELEASED" | "HI
 type source = "ORIGINAL" | "MANGA" | "LIGHT_NOVEL" | "VISUAL_NOVEL" | "VIDEO_GAME" | "OTHER" | "NOVEL" | "DOUJINSHI" | "ANIME" | "WEB_NOVEL" | "LIVE_ACTION" | "GAME" | "COMIC" | "MULTIMEDIA_PROJECT" | "PICTURE_BOOK" | "UNKNOWN";
 type Nullable<T> = T | null | undefined;
 class BaseMedia {
-    idMAL?:Nullable<number> | undefined;
+    idMAL?:Nullable<number>;
     title?:Nullable<string>;
+    popularity?: Nullable<number>;
+    favorites?: Nullable<number>;
+    description?: Nullable<Media["description"]>;
     Synonyms?: Nullable<Media["synonyms"]>;
     authors?:Nullable<string[]>;
     genres?:Nullable<Media["genres"]>;
     status?: Nullable<Media["status"]>;
-    description?: Nullable<Media["description"]>;
     isAdult?:Nullable<boolean>;
     started_at?:Nullable<Date>;
     ended_at?:Nullable<Date>;
@@ -33,7 +35,9 @@ class BaseMedia {
     characters?:Nullable<Character[]>;
     provider?:Nullable<Provider>;
     aniURL?:Nullable<string>;
-    countryOfOrigin?:Nullable<string>
+    countryOfOrigin?:Nullable<string>;
+    season?: string;
+    seasonYear?: number;
     constructor(provider?:Provider) {
         this.title = "";
         this.Synonyms = [];
@@ -71,8 +75,11 @@ class BaseMedia {
         this.status = status;
         return this;
     }
-
-    setDescription(description: string): this {
+    setPopularity(popularity: Nullable<number>): this {
+        this.popularity = popularity || 0;
+        return this;
+    }
+    setDescription(description: Nullable<string>): this {
         this.description = description ?? "";
         return this;
     }
@@ -133,13 +140,76 @@ class BaseMedia {
         this.countryOfOrigin = countryOfOrigin ?? "";
         return this;
     }
+    setFavourites(favourites: Nullable<number>): this {
+        this.favorites = favourites ?? 0;
+        return this
+    }
+    setSeason(season: Nullable<string>): this {
+        this.season = season || undefined;
+        return this;
+    }
+    setSeasonYear(year: Nullable<number>): this {
+        this.seasonYear = year || undefined;
+        return this;
+    }
+    
+    protected pullBaseData(data: Media | undefined): this {
+        if (!data) return this;
+        let tags : string[] = data.tags?.map((tag: Maybe<MediaTag>) => tag?.name).filter((tag) => tag != undefined) ?? [];
+        let characters_filtered = data.characters?.nodes?.filter((character) => character != undefined);
+        let characters  = characters_filtered?.map((character) =>  ({
+            first: character?.name?.first ?? null,
+            last: character?.name?.last ?? null,
+            full: character?.name?.full ?? null,
+            gender: character?.gender ?? null,
+            image: character?.image?.medium ?? null
+
+        })) ?? [];
+        const started_at = this.createSafeDate(data.startDate);
+        const ended_at = this.createSafeDate(data.endDate);
+        this.setTitle(data.title?.english || data.title?.romaji || data.title?.native || "")
+            .setSynonyms(data.synonyms)
+            .setGenres(data.genres?.filter((genre): genre is string => genre !== null && genre !== undefined) as string[])
+            .setStatus(data.status)
+            .setDescription(data.description ?? "")
+            .setStartedAt(started_at)
+            .setEndedAt(ended_at)
+            .setCover(data.coverImage?.large)
+            .setRating(data.averageScore)
+            .setSource(data.source)
+            .setTags(tags)
+            .setCharacters(characters)
+            .setIdMAL(data.idMal)
+            .setAdult(data.isAdult)
+            .setaniURL(data.siteUrl)
+            .setCountryOfOrigin(data.countryOfOrigin)
+            .setPopularity(data.popularity)
+            .setFavourites(data.favourites)
+            .setSeason(data.season)
+            .setSeasonYear(data.seasonYear)
+        return this;
+    }
+
+    private createSafeDate(dateObj?: Nullable<FuzzyDate>): Date {
+        if (!dateObj?.year) return new Date();
+        
+        try {
+            return new Date(
+            dateObj.year, 
+            (dateObj.month || 1) - 1,
+            dateObj.day || 1
+            );
+        } catch {
+            return new Date();
+        }
+    }
 }
 
 
 export class Manga extends BaseMedia {
     Chapters: Chapter[];
     chaptersAvailable: number;
-    volumes: number | undefined;
+    volumes: Nullable<number>;
     constructor(provider?: Provider) {
         super(provider);
         this.Chapters = [];
@@ -157,7 +227,7 @@ export class Manga extends BaseMedia {
         this.Chapters = Chapters;
         return this;
     }
-    setVolumes(volumes: number): this {
+    setVolumes(volumes: Nullable<number>): this {
         this.volumes = volumes;
         return this;
     }
@@ -166,48 +236,26 @@ export class Manga extends BaseMedia {
         return this;
     }
     pullData(data: Media | undefined): this {
-        if (!data) return this;
-        let started_at = new Date(data.startDate?.day + "/" + data.startDate?.month + "/" + data.startDate?.year);
-        let ended_at = new Date(data.endDate?.day + "/" + data.endDate?.month + "/" + data.endDate?.year);
-        let tags : string[] = data.tags?.map((tag: Maybe<MediaTag>) => tag?.name).filter((tag) => tag != undefined) ?? [];
-        let characters_filtered = data.characters?.nodes?.filter((character) => character != undefined);
-        let characters  = characters_filtered?.map((character) =>  ({
-            first: character?.name?.first ?? null,
-            last: character?.name?.last ?? null,
-            full: character?.name?.full ?? null,
-            gender: character?.gender ?? null,
-            image: character?.image?.medium ?? null
-
-        })) ?? [];
-        this.setTitle(data.title?.english)
-            .setSynonyms(data.synonyms)
-            .setGenres(data.genres?.filter((genre): genre is string => genre !== null && genre !== undefined) as string[])
-            .setStatus(data.status)
-            .setDescription(data.description ?? "")
-            .setStartedAt(started_at)
-            .setEndedAt(ended_at)
-            .setCover(data.coverImage?.large)
-            .setRating(data.averageScore)
-            .setSource(data.source)
-            .setTags(tags)
-            .setCharacters(characters)
-            .setIdMAL(data.idMal)
-            .setAdult(data.isAdult)
-            .setaniURL(data.siteUrl)
-            .setCountryOfOrigin(data.countryOfOrigin)
+        this.pullBaseData(data)
+        .setVolumes(data?.volumes)
         return this;
     }
 }
 
 export class Anime extends BaseMedia {
-    //class not implemented yet
-    episodes: number;
-    constructor(provider: Provider) {
+    episodes: Nullable<number>;
+    constructor(provider?: Provider) {
         super(provider);
         this.episodes = 0;
     }
-    setEpisodes(episodes: number) : this {
+    setEpisodes(episodes: Nullable<number>) : this {
         this.episodes = episodes;
+        return this;
+    }
+    pullData(data: Media | undefined): this {
+        if (!data) return this;
+        this.pullBaseData(data)
+            .setEpisodes(data.episodes)
         return this;
     }
 }

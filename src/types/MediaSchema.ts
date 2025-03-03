@@ -173,28 +173,17 @@ export type MediaExternalLink = {
 };
 
 /** The format the media was released in */
-export enum MediaFormat {
-  /** Professionally published manga with more than one chapter */
-  Manga = 'MANGA',
-  /** Anime movies with a theatrical release */
-  Movie = 'MOVIE',
-  /** Short anime released as a music video */
-  Music = 'MUSIC',
-  /** Written books released as a series of light novels */
-  Novel = 'NOVEL',
-  /** (Original Net Animation) Anime that have been originally released online or are only available through streaming services. */
-  Ona = 'ONA',
-  /** Manga with just one chapter */
-  OneShot = 'ONE_SHOT',
-  /** (Original Video Animation) Anime that have been released directly on DVD/Blu-ray without originally going through a theatrical release or television broadcast */
-  Ova = 'OVA',
-  /** Special episodes that have been included in DVD/Blu-ray releases, picture dramas, pilots, etc */
-  Special = 'SPECIAL',
-  /** Anime broadcast on television */
-  Tv = 'TV',
-  /** Anime which are under 15 minutes in length and broadcast on television */
-  TvShort = 'TV_SHORT'
-}
+export type MediaFormat =
+  | 'MANGA'
+  | 'MOVIE'
+  | 'MUSIC'
+  | 'NOVEL'
+  | 'ONA'
+  | 'ONE_SHOT'
+  | 'OVA'
+  | 'SPECIAL'
+  | 'TV'
+  | 'TV_SHORT';
 
 /** Media list item */
 export type MediaList = {
@@ -207,104 +196,76 @@ export type MediaList = {
 };
 
 /** Media sort enums */
-export enum MediaSort {
-  Chapters = 'CHAPTERS',
-  ChaptersDesc = 'CHAPTERS_DESC',
-  Duration = 'DURATION',
-  DurationDesc = 'DURATION_DESC',
-  EndDate = 'END_DATE',
-  EndDateDesc = 'END_DATE_DESC',
-  Episodes = 'EPISODES',
-  EpisodesDesc = 'EPISODES_DESC',
-  Favourites = 'FAVOURITES',
-  FavouritesDesc = 'FAVOURITES_DESC',
-  Format = 'FORMAT',
-  FormatDesc = 'FORMAT_DESC',
-  Id = 'ID',
-  IdDesc = 'ID_DESC',
-  Popularity = 'POPULARITY',
-  PopularityDesc = 'POPULARITY_DESC',
-  Score = 'SCORE',
-  ScoreDesc = 'SCORE_DESC',
-  SearchMatch = 'SEARCH_MATCH',
-  StartDate = 'START_DATE',
-  StartDateDesc = 'START_DATE_DESC',
-  Status = 'STATUS',
-  StatusDesc = 'STATUS_DESC',
-  TitleEnglish = 'TITLE_ENGLISH',
-  TitleEnglishDesc = 'TITLE_ENGLISH_DESC',
-  TitleNative = 'TITLE_NATIVE',
-  TitleNativeDesc = 'TITLE_NATIVE_DESC',
-  TitleRomaji = 'TITLE_ROMAJI',
-  TitleRomajiDesc = 'TITLE_ROMAJI_DESC',
-  Trending = 'TRENDING',
-  TrendingDesc = 'TRENDING_DESC',
-  Type = 'TYPE',
-  TypeDesc = 'TYPE_DESC',
-  UpdatedAt = 'UPDATED_AT',
-  UpdatedAtDesc = 'UPDATED_AT_DESC',
-  Volumes = 'VOLUMES',
-  VolumesDesc = 'VOLUMES_DESC'
-}
+export type MediaSort =
+  | 'CHAPTERS'
+  | 'CHAPTERS_DESC'
+  | 'DURATION'
+  | 'DURATION_DESC'
+  | 'END_DATE'
+  | 'END_DATE_DESC'
+  | 'EPISODES'
+  | 'EPISODES_DESC'
+  | 'FAVOURITES'
+  | 'FAVOURITES_DESC'
+  | 'FORMAT'
+  | 'FORMAT_DESC'
+  | 'ID'
+  | 'ID_DESC'
+  | 'POPULARITY'
+  | 'POPULARITY_DESC'
+  | 'SCORE'
+  | 'SCORE_DESC'
+  | 'SEARCH_MATCH'
+  | 'START_DATE'
+  | 'START_DATE_DESC'
+  | 'STATUS'
+  | 'STATUS_DESC'
+  | 'TITLE_ENGLISH'
+  | 'TITLE_ENGLISH_DESC'
+  | 'TITLE_NATIVE'
+  | 'TITLE_NATIVE_DESC'
+  | 'TITLE_ROMAJI'
+  | 'TITLE_ROMAJI_DESC'
+  | 'TRENDING'
+  | 'TRENDING_DESC'
+  | 'TYPE'
+  | 'TYPE_DESC'
+  | 'UPDATED_AT'
+  | 'UPDATED_AT_DESC'
+  | 'VOLUMES'
+  | 'VOLUMES_DESC';
 
-export enum MediaSeason {
-  /** Months September to November */
-  Fall = 'FALL',
-  /** Months March to May */
-  Spring = 'SPRING',
-  /** Months June to August */
-  Summer = 'SUMMER',
-  /** Months December to February */
-  Winter = 'WINTER'
-}
+export type MediaSeason =
+  | 'FALL'
+  | 'SPRING'
+  | 'SUMMER'
+  | 'WINTER';
 
 /** Source type the media was adapted from */
-export enum MediaSource {
-  /** Version 2+ only. Japanese Anime */
-  Anime = 'ANIME',
-  /** Version 3 only. Comics excluding manga */
-  Comic = 'COMIC',
-  /** Version 2+ only. Self-published works */
-  Doujinshi = 'DOUJINSHI',
-  /** Version 3 only. Games excluding video games */
-  Game = 'GAME',
-  /** Written work published in volumes */
-  LightNovel = 'LIGHT_NOVEL',
-  /** Version 3 only. Live action media such as movies or TV show */
-  LiveAction = 'LIVE_ACTION',
-  /** Asian comic book */
-  Manga = 'MANGA',
-  /** Version 3 only. Multimedia project */
-  MultimediaProject = 'MULTIMEDIA_PROJECT',
-  /** Version 2+ only. Written works not published in volumes */
-  Novel = 'NOVEL',
-  /** An original production not based of another work */
-  Original = 'ORIGINAL',
-  /** Other */
-  Other = 'OTHER',
-  /** Version 3 only. Picture book */
-  PictureBook = 'PICTURE_BOOK',
-  /** Video game */
-  VideoGame = 'VIDEO_GAME',
-  /** Video game driven primary by text and narrative */
-  VisualNovel = 'VISUAL_NOVEL',
-  /** Version 3 only. Written works published online */
-  WebNovel = 'WEB_NOVEL'
-}
+export type MediaSource =
+  | 'ANIME'
+  | 'COMIC'
+  | 'DOUJINSHI'
+  | 'GAME'
+  | 'LIGHT_NOVEL'
+  | 'LIVE_ACTION'
+  | 'MANGA'
+  | 'MULTIMEDIA_PROJECT'
+  | 'NOVEL'
+  | 'ORIGINAL'
+  | 'OTHER'
+  | 'PICTURE_BOOK'
+  | 'VIDEO_GAME'
+  | 'VISUAL_NOVEL'
+  | 'WEB_NOVEL';
 
 /** The current releasing status of the media */
-export enum MediaStatus {
-  /** Ended before the work could be finished */
-  Cancelled = 'CANCELLED',
-  /** Has completed and is no longer being released */
-  Finished = 'FINISHED',
-  /** Version 2 only. Is currently paused from releasing and will resume at a later date */
-  Hiatus = 'HIATUS',
-  /** To be released at a later date */
-  NotYetReleased = 'NOT_YET_RELEASED',
-  /** Currently releasing */
-  Releasing = 'RELEASING'
-}
+export type MediaStatus =
+  | 'CANCELLED'
+  | 'FINISHED'
+  | 'HIATUS'
+  | 'NOT_YET_RELEASED'
+  | 'RELEASING';
 
 /** Data and links to legal streaming episodes on external sites */
 export type MediaStreamingEpisode = {
@@ -367,18 +328,14 @@ export type MediaTrailer = {
 };
 
 /** Media type enum, anime or manga. */
-export enum MediaType {
-  /** Japanese Anime */
-  Anime = 'ANIME',
-  /** Asian comic */
-  Manga = 'MANGA'
-}
+export type MediaType =
+  | 'ANIME'
+  | 'MANGA';
 
-export enum ExternalLinkType {
-  Info = 'INFO',
-  Social = 'SOCIAL',
-  Streaming = 'STREAMING'
-}
+export type ExternalLinkType =
+  | 'INFO'
+  | 'SOCIAL'
+  | 'STREAMING';
 
 /** The pagination information */
 export type PageInfo = {

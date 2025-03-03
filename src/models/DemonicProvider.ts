@@ -4,7 +4,8 @@ import { Manga } from "../types/interface.ts";
 import * as deno_dom from "@b-fuze/deno-dom";
 import { Anilist } from "../utils/anilist.ts";
 import { sleep ,tryFetch } from "../utils/helper.ts";
-import { MediaStatus, MediaType } from "../types/MediaSchema.ts";
+import { type MediaStatus, type MediaType } from "../types/MediaSchema.ts";
+import { ErrorCodes, KomikkuError, type Result } from "../types/Exceptions.ts";
 
 const { DOMParser } = deno_dom
 
@@ -56,7 +57,7 @@ export class DemonicProvider extends Provider {
                 const title = manga_element.querySelector("a")?.getAttribute("title");
                 const url = manga_element.querySelector("a")?.getAttribute("href");
                 if (!title || !url) continue;
-                const manga = await this.grabManga(url);
+                const { data : manga, error} = await this.grabManga(url);
                 if (!manga) continue;
                 this.manga_list.push(manga);
             }
@@ -64,58 +65,144 @@ export class DemonicProvider extends Provider {
         return this.manga_list;
     }
 
-    async grabManga(url: string): Promise<Manga | undefined> {
+    async grabManga(url: string): Promise<Result<Manga>> {
         const { data: pageText, error } = await tryFetch(this.baseURL + url, {}, "text");
-        if (error || !pageText) return;
+        if (error && !pageText) {
+            return {
+                error: new KomikkuError(
+                    `Failed to fetch manga page: ${url}`,
+                    ErrorCodes.API,
+                    'PROVIDER',
+                    this.name,
+                    false,
+                    error
+                )
+            };
+        }
+        
         const page = new DOMParser().parseFromString(pageText, "text/html");
         const manga = new Manga(this);
-        const updatedAt = page.querySelector("div.flex-row:nth-child(4) > li:nth-child(2)")?.textContent;
-        const title = page.querySelector("html body div#manga-info-container.main-width.center-m div#manga-info-rightColumn.inline-block.left-float div.light-bg.padd-1.border-radius-1 h1.border-box.big-fat-titles")?.textContent
-        const rating = page.querySelector("html body div#manga-info-container.main-width.center-m div#manga-page.inline-block.border-box.left-float div#R-V-B.border-box.center-align li.RVB.light-bg")
-        const description = page.querySelector(".white-font")?.textContent;
-        const cover = page.querySelector("html body div#manga-info-container.main-width.center-m div#manga-page.inline-block.border-box.left-float div.center-align.full-width img.border-box")
-        const authors = page.querySelector("#manga-info-stats > div:nth-child(1) > li:nth-child(2)")?.textContent?.split(";");
-        const genres = Array.from(page.querySelectorAll(".genres-list > li"), (genre) => genre.textContent?.trim());
         
+        // Extract basic metadata from page
+        const updatedAt = page.querySelector("div.flex-row:nth-child(4) > li:nth-child(2)")?.textContent;
+        const title = page.querySelector("#manga-info-rightColumn h1.big-fat-titles")?.textContent;
+        const description = page.querySelector(".white-font")?.textContent;
+        const authors = page.querySelector("#manga-info-stats > div:nth-child(1) > li:nth-child(2)")?.textContent?.split(";");
         const status = page.querySelector("div.flex-row:nth-child(3) > li:nth-child(2)")?.textContent;
-        if (!updatedAt || !title) return;
-        let anilist_data;
-        if (url.split("/")[1] == "manga")
-             anilist_data = (await new Anilist().search({search:title, type:MediaType.Manga, perPage:1}))
-        anilist_data = anilist_data?.[0];
-        if (rating) manga.setRating(parseInt(rating.textContent));
-        status?.toLowerCase() == "completed" ? MediaStatus.Finished : MediaStatus.Releasing;
-        let result = (await new Anilist().search({search:title, type:MediaType.Manga, perPage:1}))?.[0];
-        if (!result) return;
-            result.setChapters(await this.getChapters(manga));
-            return result.setProvider(this).setUrl(url).setAuthors(authors);
+        
+        if (!title)
+            return (
+        {
+            error : new KomikkuError(
+                `Failed to fetch manga title: ${url}`,
+                ErrorCodes.API,
+                'PROVIDER',
+                this.name,
+                false)})
+        
+        try {
+            // Make a single AniList API call
+            let { data: result, error: anilistError } = await new Anilist().search({
+                search: title, 
+                type: "MANGA", 
+                perPage: 1
+            });
+            const firstManga = result?.[0];
+            if (anilistError) {
+                console.error(`AniList error for ${title}: ${anilistError.message}`);
+                // Continue with basic manga data
+            }
+            
+            // Use result from AniList if available, otherwise use basic manga
+            const mangaData = firstManga || manga;
+            
+            // Set provider-specific data
+            mangaData
+                .setProvider(this)
+                .setUrl(url)
+                .setAuthors(authors)
+                .setDescription(description)
+            if (status) {
+                mangaData.setStatus(
+                    status.toLowerCase() === "completed" ? "FINISHED" : "RELEASING"
+                );
+            }
+            
+            // Now fetch chapters
+            const chapters = await this.getChapters(mangaData);
+            mangaData.setChapters(chapters);
+            
+            return {data : mangaData};
+        } catch (e) {
+            console.error(`Error processing manga ${title}:`, e);
+            return {
+                error: new KomikkuError(
+                    `Failed to process manga: ${title}`,
+                    ErrorCodes.API,
+                    'PROVIDER',
+                    this.name,
+                    false,
+                    e as Error
+                )
+            };
+        }
     }
 
-
-            
-    async search(title: string, limitManga? : number): Promise<Manga[]> {
+    async search(title: string, limitManga? : number): Promise<Result<Manga[]>> {
         let i = 0;
         const results: Manga[] = [];
         const { data: searchPageText, error: searchError } = await tryFetch(this.baseURL + "search.php?manga=" + encodeURIComponent(title), {}, "text");
-        if (searchError || !searchPageText) return results;   
+        if (searchError || !searchPageText) return {
+            error : new KomikkuError(
+                `Failed to send request to the search page: ${this.baseURL}search.php?manga=${encodeURIComponent(title)}`,
+                ErrorCodes.API,
+                'PROVIDER',
+                this.name,
+                false
+            )
+        };   
         const searchPage = new DOMParser().parseFromString(searchPageText, "text/html");
         const manga_elements = searchPage.querySelectorAll("a");
         for (const manga_element of manga_elements) {
             if (limitManga != undefined && i >= limitManga) break;
             const url = manga_element.getAttribute("href");
             if (!url) continue;
-            const manga = await this.grabManga(url);
+            const {data : manga, error} = await this.grabManga(url);
             if (manga) results.push(manga), i++;
         }
         
-        return results;
+        return {data : results};
     }
     async getTrending(): Promise<Manga[]> {
-        const { data: searchPageText, error: searchError } = await tryFetch(this.baseURL,{}, "text");
-        if (searchError || !searchPageText) return [];
-        const searchPage = new DOMParser().parseFromString(searchPageText, "text/html");
-        const elements = Array.from(searchPage.querySelectorAll("#carousel > div > a"), ((e)=>e.getAttribute("href"))) 
-        const mangaList = (await Promise.all(elements.map(async (url) => await this.grabManga(url || ""), await sleep(100)))).filter((manga) => manga != undefined);
-        return mangaList;
+        const { data: pageText, error } = await tryFetch(this.baseURL, {}, "text");
+        
+        if (error || !pageText) {
+            return [];
+        }
+        
+        try {
+            const page = new DOMParser().parseFromString(pageText, "text/html");
+            const elements = Array.from(
+                page.querySelectorAll("#carousel > div > a"), 
+                (e) => e.getAttribute("href")
+            ).filter(Boolean);
+            
+            // Process URLs in batches to avoid overloading the server
+            const mangaList = [];
+            for (const url of elements) {
+                try {
+                    const {data : manga, error} = await this.grabManga(url || "");
+                    if (manga) mangaList.push(manga);
+                    await sleep(100);
+                } catch (e) {
+                    console.error(`Error fetching trending manga ${url}:`, e);
+                }
+            }
+            
+            return mangaList;
+        } catch (e) {
+            console.error("Error fetching trending manga:", e);
+            return [];
+        }
     }
 }

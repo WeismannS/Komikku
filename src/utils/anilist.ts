@@ -1,6 +1,7 @@
 import { tryFetch } from "./helper.ts";
-import { MediaType, type InternalPageMediaArgs, type Media, type QueryPageArgs } from "../types/MediaSchema.ts";
+import { type MediaType, type InternalPageMediaArgs, type Media, type QueryPageArgs } from "../types/MediaSchema.ts";
 import {Anime, Manga } from "../types/interface.ts";
+import { ErrorCodes, KomikkuError, type Result } from "../types/Exceptions.ts";
 const url = 'https://graphql.anilist.co';
 
 const searchQuery = `
@@ -120,6 +121,8 @@ const searchQuery = `
         month
         day
       }
+      season
+      seasonYear
       externalLinks {
         url
         site
@@ -166,10 +169,11 @@ const searchQuery = `
   }
 }
 `
-
-type mangaSearchArgs = InternalPageMediaArgs & QueryPageArgs & {type : MediaType.Manga}
-type animeSearchArgs = InternalPageMediaArgs & QueryPageArgs & {type : MediaType.Anime}
-type mediaSearchArgs = InternalPageMediaArgs & QueryPageArgs & {type : MediaType.Anime | MediaType.Manga}
+type MANGA = "MANGA"
+type ANIME = "ANIME"
+type mangaSearchArgs = InternalPageMediaArgs & QueryPageArgs & {type : MANGA}
+type animeSearchArgs = InternalPageMediaArgs & QueryPageArgs & {type : ANIME}
+type mediaSearchArgs = InternalPageMediaArgs & QueryPageArgs & {type : MediaType}
 export class Anilist {
   constructor() {
   }
@@ -198,9 +202,10 @@ export class Anilist {
     return data.data.Page.media;
   }
 
-  async search(args: animeSearchArgs,): Promise<Anime[] | undefined>;
-  async search(args: mangaSearchArgs): Promise<Manga[] | undefined>;
-  async search(args: mediaSearchArgs): Promise<Anime[] | Manga[] | undefined> {
+  async search(args: animeSearchArgs): Promise<Result<Anime[]>>;
+async search(args: mangaSearchArgs): Promise<Result<Manga[]>>;
+async search(args: mediaSearchArgs): Promise<Result<Anime[] | Manga[]>> {
+  try {
     const options = {
       retryOnRateLimit: true,
       method: 'POST',
@@ -213,10 +218,59 @@ export class Anilist {
       }),
     };
 
-    const { data, error } = await tryFetch(url, options, "json") as { data: any, error: any };
-    if (error) return
+    const { data, error } = await tryFetch(url, options, "json");
     
-    return  data.data.Page.media.map((media: Media) =>   new Manga().pullData(media) );
-}
-}
+    if (error) {
+      return { 
+        error: new KomikkuError(
+          `AniList API error: ${error.message || "Unknown error"}`,
+          ErrorCodes.API,
+          'ANILIST',
+          undefined,
+          false,
+          error
+        )
+      };
+    }
 
+    if (!data?.data?.Page?.media) {
+      return {
+        error: new KomikkuError(
+          'Invalid AniList response structure',
+          ErrorCodes.PARSING,
+          'ANILIST'
+        )
+      };
+    }
+    if (data.data.Page.media.length === 0) {
+      return {
+        error: new KomikkuError(
+          'No results found',
+          ErrorCodes.NOT_FOUND,
+          'ANILIST'
+        )
+      };
+    }
+    if (args.type === "ANIME") {
+      return { 
+        data: data.data.Page.media.map((media: Media) => new Anime().pullData(media))
+      };
+    }
+    
+    return { 
+      data: data.data.Page.media.map((media: Media) => new Manga().pullData(media))
+    };
+  } catch (e) {
+    return {
+      error: new KomikkuError(
+        `Unexpected error in AniList search: ${e instanceof Error ? e.message : String(e)}`,
+        ErrorCodes.UNKNOWN,
+        'ANILIST',
+        undefined,
+        false,
+        e instanceof Error ? e : undefined
+      )
+    };
+  }
+}
+}

@@ -2,7 +2,8 @@ import {
     setTimeout as sleep 
 } from "node:timers/promises"
 export {sleep}
-export async function tryFetch(url: string, options: RequestInit & {retryOnRateLimit? : boolean}, func: "json" | "text") {
+export async function tryFetch(url: string, options: RequestInit & {retryOnRateLimit? : boolean}, func: "json" | "text")
+ : Promise<{data : any, error : null} | {data : null, error : Error}> {
   try {
     console.log(url);
     const response = await fetch(url, options);
@@ -24,6 +25,7 @@ export async function tryFetch(url: string, options: RequestInit & {retryOnRateL
     return { data, error: null };
   } catch (error) {
     console.error('Error:', error);
-    return { data: null, error };
+    let e  = error as Error;
+    return { data: null,  error : e };
   }
 }

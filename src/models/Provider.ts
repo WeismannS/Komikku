@@ -1,3 +1,4 @@
+import type { Result } from "../types/Exceptions.ts";
 import type { Manga } from "../types/interface.ts";
 import type { Chapter } from "../types/types.ts";
 
@@ -17,7 +18,7 @@ export abstract class Provider {
     abstract fetchMangaList(): Promise<Manga[]>;
     abstract getChapters(manga : Manga): Promise<Chapter[]>;
     abstract getPages(chapter : Chapter): Promise<string[]>;
-    abstract search(title : string, limitManga? : number): Promise<Manga[] | undefined>;
-    abstract grabManga(url : string): Promise<Manga | undefined>;
+    abstract search(title : string, limitManga? : number): Promise<Result<Manga[]>>;
+    abstract grabManga(url : string): Promise<Result<Manga>>;
     abstract getTrending(): Promise<Manga[]>
 }
