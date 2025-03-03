@@ -182,8 +182,7 @@ export class Anilist {
     const variables = {
       page: 1,
       perPage,
-      sort: ["TRENDING_DESC"],
-      type: "MANGA",
+      sort: ["TRENDING_DESC"]
     }
     const options = {
       retryOnRateLimit: true,

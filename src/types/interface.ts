@@ -187,6 +187,7 @@ class BaseMedia {
             .setFavourites(data.favourites)
             .setSeason(data.season)
             .setSeasonYear(data.seasonYear)
+            console.log(data.season)
         return this;
     }
 

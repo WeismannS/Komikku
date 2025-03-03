@@ -7,9 +7,9 @@
   "dependencies": {
     "@b-fuze/deno-dom": "npm:@jsr/b-fuze__deno-dom@0.1.49"
   },
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "A Type-Safe TypeScript-based Interface library that provides a unified API for fetching manga data from various sources.",
-  "main": "dist/komikku.esm.js",
+  "main": "dist/komikku.cjs.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/WeismannS/Komikku.git"

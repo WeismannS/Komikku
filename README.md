@@ -8,30 +8,28 @@ A Type-Safe TypeScript-based Interface library that provides a unified API for f
 - 📖 **Chapter Management**: Fetch chapters and page images
 - 📱 **Integration**: AniList integration for enhanced metadata
 - 🛠️ **Extensible**: Architecture designed for easy addition of new providers
+- 🧩 **Type-Safe**: Full TypeScript support with comprehensive type definitions
+- ⚡ **Cross-Runtime**: Works with Node.js, Bun, and Deno
 
 ## Installation
 
-The only dependency Komikku requires is [@jsr/dom-deno](https://jsr.io/@b-fuze/deno-dom):
-
 ```bash
 # For Bun:
-bun install
+bun install komikku
 
 # For Node:
-npm install
+npm install komikku
 
 # For Deno:
-deno install
+import { Komikku } from "https://deno.land/x/komikku/src/index.ts";
 ```
-
-If you encounter an error, try explicitly installing the package through the link above
 
 ## Usage
 
 ### Basic Usage
 
 ```typescript
-import { Komikku } from "./lib.ts";
+import { Komikku } from "komikku";
 
 // Initialize the Komikku client
 const komikku = new Komikku();
@@ -44,10 +42,10 @@ const trendingManga = await komikku.providers.Demonicscans.getTrending();
 
 ```typescript
 // Search across all providers
-const results = await komikku.search("One Piece");
+const {data: results} = await komikku.search("One Piece");
 
 // Search with specific providers and limit
-const limitedResults = await komikku.search("Naruto", {
+const {data: limitedResults} = await komikku.search("Naruto", {
   providers: ["Demonicscans"],
   limitManga: 5
 });
@@ -61,7 +59,7 @@ const chapters = await manga.getChapters();
 
 ```typescript
 // Get a specific chapter
-const manga = await komikku.search("One Piece", { limitManga: 1 });
+const {data: manga} = await komikku.search("One Piece", { limitManga: 1 });
 const chapters = await manga[0].getChapters();
 const firstChapter = chapters[0];
 
@@ -72,35 +70,49 @@ const pages = await firstChapter.getPages();
 ### AniList Integration
 
 ```typescript
-import { Anilist } from "./utils/anilist.ts";
-import { MediaType } from "./types/MediaSchema.ts";
+import { Komikku } from "komikku";
+
+const komikku = new Komikku();
 
 // Search for manga using AniList
-const anilist = new Anilist();
-const searchResults = await anilist.search({
+const {data: searchResults} = await komikku.Anilist.search({
   search: "One Piece", 
-  type: MediaType.Manga,
+  type: "MANGA",
   perPage: 5
 });
+```
+
+## Error Handling
+
+Komikku provides robust error handling with detailed error types:
+
+```typescript
+const {data: results, error} = await komikku.search("One Piece");
+
+if (error) {
+  console.error(`Error: ${error.message} (Code: ${error.code})`);
+} else {
+  console.log(`Found ${results.length} results`);
+}
 ```
 
 ## Architecture
 
 ### Core Components
 
-- **Komikku**: Main client class that handles providers and provides a unified search interface.
-- **Provider**: Abstract base class that all manga providers must implement.
-- **DemonicProvider**: Implementation of the Provider interface for DemonicScans.
+- **`Komikku`**: Main client class that handles providers and provides a unified search interface.
+- **`Provider`**: Abstract base class that all manga providers must implement.
+- **`DemonicProvider`**: Implementation of the Provider interface for DemonicScans.
 
 ### Data Models
 
-- **Manga**: Represents a manga with properties like title, authors, chapters, etc.
-- **Chapter**: Represents a manga chapter with methods to fetch and manage pages.
+- **`Manga`**: Represents a manga with properties like title, authors, chapters, etc.
+- **`Chapter`**: Represents a manga chapter with methods to fetch and manage pages.
 
 ### Utilities
 
-- **Anilist**: Fetch manga metadata from AniList GraphQL API.
-- **Helper**: Utility functions for HTTP requests with retry logic.
+- **`Anilist`**: Fetch manga metadata from AniList GraphQL API.
+- **`Helper`**: Utility functions for HTTP requests with retry logic.
 
 ## Currently Supported Providers
 
@@ -114,6 +126,7 @@ To add a new provider, create a new class that extends `Provider` and implements
 import { Provider } from "./models/Provider.ts";
 import { Manga } from "./types/interface.ts";
 import { Chapter } from "./types/types.ts";
+import { Result } from "./types/Exceptions.ts";
 
 export class NewProvider extends Provider {
     constructor() {
@@ -132,11 +145,11 @@ export class NewProvider extends Provider {
         // Implementation
     }
     
-    async search(title: string, limitManga?: number): Promise<Manga[] | undefined> {
+    async search(title: string, limitManga?: number): Promise<Result<Manga[]>> {
         // Implementation
     }
     
-    async grabManga(url: string): Promise<Manga | undefined> {
+    async grabManga(url: string): Promise<Result<Manga>> {
         // Implementation
     }
     

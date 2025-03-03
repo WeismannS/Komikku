@@ -5,7 +5,7 @@ export class KomikkuError extends Error {
       public source: 'ANILIST' | 'PROVIDER' | 'INTERNAL',
       public providerName?: string,
       public partial?: boolean, // Indicates if some data was successfully retrieved
-      public cause?: Error
+      public override cause?: Error
     ) {
       super(message);
       this.name = 'KomikkuError';
