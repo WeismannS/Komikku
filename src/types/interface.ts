@@ -12,7 +12,6 @@ export interface Character {
 
 type  status = "FINISHED" | "RELEASING" | "CANCELLED" | "NOT_YET_RELEASED" | "HIATUS" | "UNKNOWN" ;
 type source = "ORIGINAL" | "MANGA" | "LIGHT_NOVEL" | "VISUAL_NOVEL" | "VIDEO_GAME" | "OTHER" | "NOVEL" | "DOUJINSHI" | "ANIME" | "WEB_NOVEL" | "LIVE_ACTION" | "GAME" | "COMIC" | "MULTIMEDIA_PROJECT" | "PICTURE_BOOK" | "UNKNOWN";
-type Nullable<T> = T | null | undefined;
 class BaseMedia {
     idMAL?:Maybe<number>;
     title?:Maybe<string>;
@@ -97,7 +96,7 @@ class BaseMedia {
         return this;
     }
 
-    private createSafeDate(dateObj?: Nullable<FuzzyDate>): Date {
+    private createSafeDate(dateObj?: Maybe<FuzzyDate>): Date {
         if (!dateObj?.year) return new Date();
         
         try {
@@ -114,35 +113,15 @@ class BaseMedia {
 
 
 export class Manga extends BaseMedia {
-    chapters: Chapter[];
-    chaptersAvailable: number;
-    volumes: Nullable<number>;
+    chapters?: Maybe<Chapter[]>;
+    chaptersAvailable?: Maybe<number>;
+    volumes?: Maybe<number>;
     constructor(provider?: Provider) {
         super(provider);
         this.chapters = [];
         this.chaptersAvailable = 0;
     }
-    getChapters():Promise<Chapter[] | undefined> | undefined {
-        return this.provider?.getChapters(this);
-    }
-    setAuthors(authors: string[] | undefined
-    ): this {
-        this.authors = authors;
-        return this;
-    }
-    setChapters(Chapters: Chapter[] | []): this {
-        this.chapters = Chapters;
-        return this;
-    }
-    setVolumes(volumes: Nullable<number>): this {
-        this.volumes = volumes;
-        return this;
-    }
-    setChaptersCount(chaptersAvailable: number): this {
-        this.chaptersAvailable = chaptersAvailable;
-        return this;
-    }
-    
+
     pullData(data: Media | undefined): this {
         this.pullBaseData(data)
         .set({
@@ -153,19 +132,18 @@ export class Manga extends BaseMedia {
 }
 
 export class Anime extends BaseMedia {
-    episodes: Nullable<number>;
+    episodes?: Maybe<number>;
     constructor(provider?: Provider) {
         super(provider);
         this.episodes = 0;
     }
-    setEpisodes(episodes: Nullable<number>) : this {
-        this.episodes = episodes;
-        return this;
-    }
     pullData(data: Media | undefined): this {
         if (!data) return this;
         this.pullBaseData(data)
-            .setEpisodes(data.episodes)
+            .set({
+                "episodes" : data?.chapters,
+            
+            })
         return this;
     }
 }

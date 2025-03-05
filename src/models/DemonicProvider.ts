@@ -4,7 +4,6 @@ import { Manga } from "../types/interface.ts";
 import * as deno_dom from "@b-fuze/deno-dom";
 import { Anilist } from "../utils/anilist.ts";
 import { sleep ,tryFetch } from "../utils/helper.ts";
-import { type MediaStatus, type MediaType } from "../types/MediaSchema.ts";
 import { ErrorCodes, KomikkuError, type Result } from "../types/Exceptions.ts";
 
 const { DOMParser } = deno_dom
@@ -15,15 +14,26 @@ export class DemonicProvider extends Provider {
         super("Demonicscans", "https://demonicscans.org/");
     }
 
-    async getPages(chapter: Chapter): Promise<string[]> {
+    async getPages(chapter: Chapter): Promise<Result<string[]>> {
         const { data: pageText, error } = await tryFetch(this.baseURL + chapter.url, {}, "text");
-        if (error || !pageText) return [];
+    if (error || !pageText) {
+        return {
+            error: new KomikkuError(
+                "Could not fetch chapter pages",
+                ErrorCodes.CHAPTER_FETCH_ERROR,
+                'PROVIDER',
+                this.name,
+                false,
+                error ?? undefined
+            )
+        };
+    }
         const page = new DOMParser().parseFromString(pageText, "text/html");
         const pages = page.querySelectorAll("img.imgholder");
         const images: string[] = [];
         for (let image of pages)
             images.push(image.getAttribute("src") || "")
-        return images;
+        return {data : images};
     }
 
     async getChapters(manga: Manga): Promise<Chapter[]> {
@@ -41,8 +51,7 @@ export class DemonicProvider extends Provider {
             const chapter = new Chapter(manga, title, url, new Date(date));
             chapters.unshift(chapter);
         }
-        manga.setChapters(chapters);
-        manga.chaptersAvailable = chapters.length;
+        manga.set({ chapters, chaptersAvailable : chapters.length});
         return chapters;
     }
 
@@ -53,13 +62,13 @@ export class DemonicProvider extends Provider {
             if (error || !pageText) continue;
             const page = new DOMParser().parseFromString(pageText, "text/html");
             const mangaDiv = page.querySelectorAll("div.advanced-element");
-            for (let manga_element of mangaDiv) {
-                const title = manga_element.querySelector("a")?.getAttribute("title");
-                const url = manga_element.querySelector("a")?.getAttribute("href");
-                if (!title || !url) continue;
-                const { data : manga, error} = await this.grabManga(url);
-                if (!manga) continue;
-                this.manga_list.push(manga);
+            const mangaHref = Array.from(mangaDiv, (e) => e.querySelector("a")?.getAttribute("href")).filter(e => e != undefined);
+            const mangaList = await Promise.allSettled(mangaHref.map((url) => this.grabManga(url)));
+            for (const manga of mangaList) {
+                if (manga.status === "fulfilled") {
+                    if (manga.value.data)
+                        this.manga_list.push(manga.value.data);
+                }
             }
         }
         return this.manga_list;
@@ -128,7 +137,9 @@ export class DemonicProvider extends Provider {
             
             // Now fetch chapters
             const chapters = await this.getChapters(mangaData);
-            mangaData.setChapters(chapters);
+            mangaData.set({
+                chapters : chapters
+            })
             
             return {data : mangaData};
         } catch (e) {

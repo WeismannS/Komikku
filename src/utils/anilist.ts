@@ -88,6 +88,16 @@ const searchQuery = `
       duration
       type
       idMal
+      staff {
+        edges {
+          node {
+            name {
+              full
+            }
+          }
+          role
+        }  
+      }
       favourites
       idMal
       synonyms
@@ -250,6 +260,7 @@ async search(args: mediaSearchArgs): Promise<Result<Anime[] | Manga[]>> {
         )
       };
     }
+    console.log(data.data.Page.media[0].staff.edges)
     if (args.type === "ANIME") {
       return { 
         data: data.data.Page.media.map((media: Media) => new Anime().pullData(media))

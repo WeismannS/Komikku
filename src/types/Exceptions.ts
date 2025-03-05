@@ -22,7 +22,8 @@ export class KomikkuError extends Error {
     PROVIDER_SPECIFIC: 'PROVIDER_ERROR',
     NOT_FOUND: 'NOT_FOUND',
     METADATA_INCOMPLETE: 'METADATA_INCOMPLETE',
-    UNKNOWN: 'UNKNOWN_ERROR'
+    UNKNOWN: 'UNKNOWN_ERROR',
+    CHAPTER_FETCH_ERROR: 'CHAPTER_FETCH_ERROR',
   } as const;
 
   export interface Result<T> {

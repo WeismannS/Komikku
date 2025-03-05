@@ -17,7 +17,7 @@ export abstract class Provider {
      }
     abstract fetchMangaList(): Promise<Manga[]>;
     abstract getChapters(manga : Manga): Promise<Chapter[]>;
-    abstract getPages(chapter : Chapter): Promise<string[]>;
+    abstract getPages(chapter : Chapter): Promise<Result<string[]>>;
     abstract search(title : string, limitManga? : number): Promise<Result<Manga[]>>;
     abstract grabManga(url : string): Promise<Result<Manga>>;
     abstract getTrending(): Promise<Manga[]>
