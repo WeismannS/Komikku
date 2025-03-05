@@ -201,7 +201,7 @@ export class Anilist {
     return data.data.Page.media;
   }
 
-  async search(args: animeSearchArgs): Promise<Result<Anime[]>>;
+async search(args: animeSearchArgs): Promise<Result<Anime[]>>;
 async search(args: mangaSearchArgs): Promise<Result<Manga[]>>;
 async search(args: mediaSearchArgs): Promise<Result<Anime[] | Manga[]>> {
   try {

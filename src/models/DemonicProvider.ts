@@ -118,15 +118,13 @@ export class DemonicProvider extends Provider {
             
             // Set provider-specific data
             mangaData
-                .setProvider(this)
-                .setUrl(url)
-                .setAuthors(authors)
-                .setDescription(description)
-            if (status) {
-                mangaData.setStatus(
-                    status.toLowerCase() === "completed" ? "FINISHED" : "RELEASING"
-                );
-            }
+                .set({
+                    authors,
+                    description,
+                    url,
+                    provider : this,
+                    status : status?.toLowerCase() === "completed" ? "FINISHED" : "RELEASING"
+                })
             
             // Now fetch chapters
             const chapters = await this.getChapters(mangaData);
