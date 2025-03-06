@@ -5,7 +5,8 @@
       "dependencies": [
         "npm:@babel/preset-typescript@^7.26.0",
         "npm:@jsr/b-fuze__deno-dom@0.1.49",
-        "npm:@preconstruct/cli@^2.8.11"
+        "npm:@preconstruct/cli@^2.8.11",
+        "npm:fastest-levenshtein@^1.0.16"
       ]
     }
   }

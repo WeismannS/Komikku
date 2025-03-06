@@ -2,6 +2,7 @@ import { tryFetch } from "./helper.ts";
 import { type MediaType, type InternalPageMediaArgs, type Media, type QueryPageArgs } from "../types/MediaSchema.ts";
 import {Anime, Manga } from "../types/interface.ts";
 import { ErrorCodes, KomikkuError, type Result } from "../types/Exceptions.ts";
+import { closest, distance } from "fastest-levenshtein";
 const url = 'https://graphql.anilist.co';
 
 const searchQuery = `
@@ -251,6 +252,7 @@ async search(args: mediaSearchArgs): Promise<Result<Anime[] | Manga[]>> {
         )
       };
     }
+
     if (data.data.Page.media.length === 0) {
       return {
         error: new KomikkuError(
@@ -260,13 +262,12 @@ async search(args: mediaSearchArgs): Promise<Result<Anime[] | Manga[]>> {
         )
       };
     }
-    console.log(data.data.Page.media[0].staff.edges)
+   
     if (args.type === "ANIME") {
       return { 
         data: data.data.Page.media.map((media: Media) => new Anime().pullData(media))
       };
     }
-    
     return { 
       data: data.data.Page.media.map((media: Media) => new Manga().pullData(media))
     };

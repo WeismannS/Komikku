@@ -5,6 +5,7 @@ import * as deno_dom from "@b-fuze/deno-dom";
 import { Anilist } from "../utils/anilist.ts";
 import { sleep ,tryFetch } from "../utils/helper.ts";
 import { ErrorCodes, KomikkuError, type Result } from "../types/Exceptions.ts";
+import { closest } from "fastest-levenshtein";
 
 const { DOMParser } = deno_dom
 
@@ -122,6 +123,9 @@ export class DemonicProvider extends Provider {
                 // Continue with basic manga data
             }
             
+            if (firstManga) {
+                console.info("Proba : " + this.isTheRightManga(title, firstManga));
+            }
             // Use result from AniList if available, otherwise use basic manga
             const mangaData = firstManga || manga;
             

@@ -5,7 +5,8 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@b-fuze/deno-dom": "npm:@jsr/b-fuze__deno-dom@0.1.49"
+    "@b-fuze/deno-dom": "npm:@jsr/b-fuze__deno-dom@0.1.49",
+    "fastest-levenshtein": "^1.0.16"
   },
   "version": "2.0.0",
   "description": "A Type-Safe TypeScript-based Interface library that provides a unified API for fetching manga data from various sources.",
