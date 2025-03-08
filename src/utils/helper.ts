@@ -3,6 +3,7 @@ import {
 } from "node:timers/promises"
 export {sleep}
 export async function tryFetch(url: string, options: RequestInit & {retryOnRateLimit? : boolean}, func: "json" | "text")
+ // deno-lint-ignore no-explicit-any
  : Promise<{data : any, error : null} | {data : null, error : Error}> {
   try {
     const response = await fetch(url, options);
@@ -11,7 +12,9 @@ export async function tryFetch(url: string, options: RequestInit & {retryOnRateL
       if (response.status === 429  || retryAfter) {        
         if (retryAfter && options.retryOnRateLimit)
         {
+          console.log(`Rate limited! Retrying after ${retryAfter} seconds...`);
           await sleep(parseInt(retryAfter) * 1000);
+          console.log("Retrying...");
           return tryFetch(url, options, func);
         }
       } else {
@@ -21,7 +24,6 @@ export async function tryFetch(url: string, options: RequestInit & {retryOnRateL
     const data = await response[func]();
     return { data, error: null };
   } catch (error) {
-    let e  = error as Error;
-    return { data: null,  error : e };
+    return { data: null,  error : error as Error };
   }
 }

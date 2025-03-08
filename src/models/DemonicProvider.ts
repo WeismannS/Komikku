@@ -5,7 +5,6 @@ import * as deno_dom from "@b-fuze/deno-dom";
 import { Anilist } from "../utils/anilist.ts";
 import { sleep ,tryFetch } from "../utils/helper.ts";
 import { ErrorCodes, KomikkuError, type Result } from "../types/Exceptions.ts";
-import { closest } from "fastest-levenshtein";
 
 const { DOMParser } = deno_dom
 
@@ -32,7 +31,7 @@ export class DemonicProvider extends Provider {
         const page = new DOMParser().parseFromString(pageText, "text/html");
         const pages = page.querySelectorAll("img.imgholder");
         const images: string[] = [];
-        for (let image of pages)
+        for (const image of pages)
             images.push(image.getAttribute("src") || "")
         return {data : images};
     }
@@ -44,7 +43,7 @@ export class DemonicProvider extends Provider {
         const chapterDiv = page.querySelectorAll("#chapters-list > li");
 
         const chapters: Chapter[] = [];
-        for (let chapter_element of chapterDiv) {
+        for (const chapter_element of chapterDiv) {
             const title = chapter_element.querySelector("a")?.getAttribute("title");
             const url = chapter_element.querySelector("a")?.getAttribute("href");
             const date = chapter_element.querySelector("span")?.textContent;
@@ -56,8 +55,8 @@ export class DemonicProvider extends Provider {
         return chapters;
     }
 
-    async fetchMangaList(): Promise<Manga[]> {
-        for (let i = 1; i < 2; i++) {
+    async fetchMangaList(options? : {limit : number}): Promise<Manga[]> {
+        for (let i = 2; i < 3; i++) {
             const page_url = this.baseURL + "advanced.php?list=" + i;
             const { data: pageText, error } = await tryFetch(page_url, {}, "text");
             if (error || !pageText) continue;
@@ -74,61 +73,33 @@ export class DemonicProvider extends Provider {
         }
         return this.manga_list;
     }
-
+    
     async grabManga(url: string): Promise<Result<Manga>> {
         const { data: pageText, error } = await tryFetch(this.baseURL + url, {}, "text");
-        if (error && !pageText) {
-            return {
-                error: new KomikkuError(
-                    `Failed to fetch manga page: ${url}`,
-                    ErrorCodes.API,
-                    'PROVIDER',
-                    this.name,
-                    false,
-                    error
-                )
-            };
-        }
+        if (error && !pageText) return this.createErrorResult("Failed to fetch manga page");
         
-        const page = new DOMParser().parseFromString(pageText, "text/html");
+        const page = this.parseHtml(pageText);
         const manga = new Manga(this);
-        
-        // Extract basic metadata from page
         const updatedAt = page.querySelector("div.flex-row:nth-child(4) > li:nth-child(2)")?.textContent;
         const title = page.querySelector("#manga-info-rightColumn h1.big-fat-titles")?.textContent;
         const description = page.querySelector(".white-font")?.textContent;
         const authors = page.querySelector("#manga-info-stats > div:nth-child(1) > li:nth-child(2)")?.textContent?.split(";");
         const status = page.querySelector("div.flex-row:nth-child(3) > li:nth-child(2)")?.textContent;
         
-        if (!title)
-            return (
-        {
-            error : new KomikkuError(
-                `Failed to fetch manga title: ${url}`,
-                ErrorCodes.API,
-                'PROVIDER',
-                this.name,
-                false)})
-        
+        if (!title) return this.createErrorResult("Failed to parse manga title");
         try {
-            // Make a single AniList API call
-            let { data: result, error: anilistError } = await new Anilist().search({
+            const { data: result, error: anilistError } = await new Anilist().search({
                 search: title, 
                 type: "MANGA", 
                 perPage: 1
             });
             const firstManga = result?.[0];
-            if (anilistError) {
+            if (anilistError)
                 console.error(`AniList error for ${title}: ${anilistError.message}`);
-                // Continue with basic manga data
-            }
-            
-            if (firstManga) {
-                console.info("Proba : " + this.isTheRightManga(title, firstManga));
-            }
+            if (firstManga && this.isTheRightManga(title, firstManga) < 0.5)
+                return this.createErrorResult("AniList result does not match manga title");
             // Use result from AniList if available, otherwise use basic manga
             const mangaData = firstManga || manga;
-            
             // Set provider-specific data
             mangaData
                 .set({
@@ -136,9 +107,9 @@ export class DemonicProvider extends Provider {
                     description,
                     url,
                     provider : this,
-                    status : status?.toLowerCase() === "completed" ? "FINISHED" : "RELEASING"
+                    status : status?.toLowerCase() === "completed" ? "FINISHED" : "RELEASING",
+                    updated_at : updatedAt ? new Date(updatedAt) : undefined
                 })
-            
             // Now fetch chapters
             const chapters = await this.getChapters(mangaData);
             mangaData.set({
@@ -147,45 +118,28 @@ export class DemonicProvider extends Provider {
             
             return {data : mangaData};
         } catch (e) {
-            console.error(`Error processing manga ${title}:`, e);
-            return {
-                error: new KomikkuError(
-                    `Failed to process manga: ${title}`,
-                    ErrorCodes.API,
-                    'PROVIDER',
-                    this.name,
-                    false,
-                    e as Error
-                )
-            };
+            return this.createErrorResult("Failed to fetch manga data", e as Error);
         }
     }
 
     async search(title: string, limitManga? : number): Promise<Result<Manga[]>> {
-        let i = 0;
-        const results: Manga[] = [];
         const { data: searchPageText, error: searchError } = await tryFetch(this.baseURL + "search.php?manga=" + encodeURIComponent(title), {}, "text");
-        if (searchError || !searchPageText) return {
-            error : new KomikkuError(
-                `Failed to send request to the search page: ${this.baseURL}search.php?manga=${encodeURIComponent(title)}`,
-                ErrorCodes.API,
-                'PROVIDER',
-                this.name,
-                false
-            )
-        };   
+        if (searchError || !searchPageText) return this.createErrorResult("Failed to fetch search page");
         const searchPage = new DOMParser().parseFromString(searchPageText, "text/html");
         const manga_elements = searchPage.querySelectorAll("a");
-        for (const manga_element of manga_elements) {
-            if (limitManga != undefined && i >= limitManga) break;
+        if (manga_elements.length == 0) return  this.createErrorResult("No manga found");
+        const mangaPromises = Array.from(manga_elements)
+            .slice(0, limitManga)
+            .map((manga_element) => {
             const url = manga_element.getAttribute("href");
-            if (!url) continue;
-            const {data : manga, error} = await this.grabManga(url);
-            if (manga) results.push(manga), i++;
-        }
-        
-        return {data : results};
+            if (!url) return null;
+            return  this.grabManga(url);;
+            });
+        //@ts-ignore previous filter should have removed all null values
+        const mangaResults = (await Promise.allSettled(mangaPromises)).filter( e => e.status === "fulfilled" && e.value != null).map(e => e.value);
+        return {data : mangaResults};
     }
+
     async getTrending(): Promise<Manga[]> {
         const { data: pageText, error } = await tryFetch(this.baseURL, {}, "text");
         
@@ -204,7 +158,7 @@ export class DemonicProvider extends Provider {
             const mangaList = [];
             for (const url of elements) {
                 try {
-                    const {data : manga, error} = await this.grabManga(url || "");
+                    const {data : manga} = await this.grabManga(url || "");
                     if (manga) mangaList.push(manga);
                     await sleep(100);
                 } catch (e) {

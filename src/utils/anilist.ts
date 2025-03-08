@@ -2,7 +2,6 @@ import { tryFetch } from "./helper.ts";
 import { type MediaType, type InternalPageMediaArgs, type Media, type QueryPageArgs } from "../types/MediaSchema.ts";
 import {Anime, Manga } from "../types/interface.ts";
 import { ErrorCodes, KomikkuError, type Result } from "../types/Exceptions.ts";
-import { closest, distance } from "fastest-levenshtein";
 const url = 'https://graphql.anilist.co';
 
 const searchQuery = `
@@ -231,6 +230,9 @@ async search(args: mediaSearchArgs): Promise<Result<Anime[] | Manga[]>> {
     const { data, error } = await tryFetch(url, options, "json");
     
     if (error) {
+      const res = await tryFetch(url, options, "text");
+      console.log(res)
+      Deno.exit(1)
       return { 
         error: new KomikkuError(
           `AniList API error: ${error.message || "Unknown error"}`,

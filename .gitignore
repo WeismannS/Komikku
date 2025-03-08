@@ -16,7 +16,7 @@ dist/
 .cache
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
-
+.vscode
 report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Runtime data

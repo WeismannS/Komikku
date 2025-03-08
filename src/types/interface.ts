@@ -1,6 +1,6 @@
 import type { Provider } from "../models/Provider.ts"
 import type { Chapter } from "../types/types.ts"
-import { type MediaStatus, type Maybe, type Media, type MediaTag, type FuzzyDate, type MediaSeason } from "./MediaSchema.ts"
+import { type Maybe, type Media, type MediaTag, type FuzzyDate, type MediaSeason } from "./MediaSchema.ts"
 
 export interface Character {
     first? :  Maybe<string> 
@@ -60,9 +60,9 @@ class BaseMedia {
     
     protected pullBaseData(data: Media | undefined): this {
         if (!data) return this;
-        let tags : string[] = data.tags?.map((tag: Maybe<MediaTag>) => tag?.name).filter((tag) => tag != undefined) ?? [];
-        let characters_filtered = data.characters?.nodes?.filter((character) => character != undefined);
-        let characters  = characters_filtered?.map((character) =>  ({
+        const tags : string[] = data.tags?.map((tag: Maybe<MediaTag>) => tag?.name).filter((tag) => tag != undefined) ?? [];
+        const characters_filtered = data.characters?.nodes?.filter((character) => character != undefined);
+        const characters  = characters_filtered?.map((character) =>  ({
             first: character?.name?.first ?? null,
             last: character?.name?.last ?? null,
             full: character?.name?.full ?? null,

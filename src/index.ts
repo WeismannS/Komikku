@@ -22,7 +22,7 @@ export class Komikku {
     async search(title: string, options?: { providers?: providers[], limitManga?: number }): Promise<Result<Manga[]>> {
         let manga_list: Manga[] = [];
         const providersList = options?.providers || Object.keys(this.providers) as providers[];
-        for (let provider of providersList) {
+        for (const provider of providersList) {
             const {data:manga} = await this.providers[provider].search(title, options?.limitManga);
             if (!manga) continue;
             manga_list = manga_list.concat(manga);
